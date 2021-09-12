@@ -1,9 +1,9 @@
 #!/usr/bin/python3
 
 import logging
-from os import environ
+from os import environ, path
 import dearpygui.dearpygui as dpg
-from threading import Thread
+from sys import exit
 
 
 class ImageViewer:
@@ -14,28 +14,70 @@ class ImageViewer:
         self.current_img = 0
         self.img_paths = []
         self.img_path = ''
-
-        self.window_size = (640, 480)
-
+        self.paddingW = 0
+        self.paddingH = 50
+        self.window_size = (1280,
+                            720)
         self.w, self.h = self.window_size
         # create viewport takes in config options too!
         self.viewport = dpg.create_viewport(
-            title='Image Viewer', width=self.w, height=self.h, decorated=False, resizable=True, x_pos=10, y_pos=10)
+            title='Image Viewer', width=self.w, height=self.h, decorated=False, resizable=False)
+
+        dpg.set_viewport_max_height(1080)
 
         # MOUSE SETUP
         dpg.setup_dearpygui(viewport=self.viewport)
         dpg.show_viewport(self.viewport)
-        # dpg.start_dearpygui()
+
+        dpg.setup_registries()
+
+        print(
+            f"vp_client_w: {self.w} vp_client_h:  {self.h}")
+        dpg.set_viewport_pos([100, 300])
         # WINDOW SETUP
 
-        with dpg.window(label="Imagewatcher", width=self.window_size[0], height=self.window_size[1], id="main_window") as w:
+        with dpg.window(label="Imagewatcher", collapsed=True, modal=False, width=self.window_size[0], height=self.window_size[1], id="main_window", no_scrollbar=True) as w:
             self.window = w
 
         dpg.set_primary_window("main_window", True)
-
-        self.firstrun = True
         self.show_info = False
         self.shouldquit = False
+        self.init_dialog_selector()
+        self.init_menu_bar()
+
+    def init_menu_bar(self):
+        with dpg.menu_bar(parent="main_window", id="menu_bar"):
+            with dpg.menu(label="File"):
+                dpg.add_menu_item(
+                    label="Open Directory", callback=lambda: dpg.show_item("directory_dialog"))
+                dpg.add_menu_item(label="Quit", callback=self.quit)
+            with dpg.menu(label="IMAGEWATCHER v0.1", parent="menu_bar", indent=self.w-150):
+                dpg.add_menu_item(
+                    label="About", callback=lambda: print("hello"))
+
+    def handle_windowdrag(self, sender, app_data, user_data):
+        self.print_cb_data(sender, app_data, user_data)
+
+    def print_cb_data(self, sender, app_data, user_data):
+        print(f"sender is: {sender}")
+        print(f"app_data is: {app_data}")
+        print(f"user_data is: {user_data}")
+
+    def handle_dialog(self, sender, app_data, user_data):
+        self.directory = path.join(
+            app_data["file_path_name"], app_data["file_name"])
+        print(f"setting dir to {self.directory}")
+        dpg.add_text(f"watching.. {self.directory}", parent="main_window")
+
+    def init_dialog_selector(self):
+        with dpg.file_dialog(directory_selector=True, modal=True, show=False, callback=self.handle_dialog, id="directory_dialog"):
+            dpg.add_file_extension(".*", color=(255, 255, 255, 255))
+            dpg.add_file_extension(
+                "Source files (*.cpp *.h *.hpp){.cpp,.h,.hpp}", color=(0, 255, 255, 255))
+            dpg.add_file_extension(".cpp", color=(255, 255, 0, 255))
+            dpg.add_file_extension(".h", color=(
+                255, 0, 255, 255), custom_text="header")
+            dpg.add_file_extension("Python(.py){.py}", color=(0, 255, 0, 255))
 
     def show_image(self):
         """ Loads the image and adds it to the window"""
@@ -43,32 +85,34 @@ class ImageViewer:
     def clear(self):
         """ Clears the window  """
 
-    def set_image(self, image_path, parent=None):
+    def set_image(self, image_path):
         if self.img_id > 0:
             dpg.delete_item("main_image")
         print("setting image")
         self.img_path = image_path
         #  clear the screen
         if len(image_path) > 0:
-
             width, height, channels, data = dpg.load_image(image_path)
-            if(width > self.window_size[0] or height > self.window_size[1]):
-                dpg.set_viewport_height(height)
-
             with dpg.texture_registry() as reg_id:
                 texture_id = dpg.add_static_texture(
                     width, height, data, parent=reg_id)
-                if height > dpg.get_viewport_height():
-                    dpg.set_viewport_height(height)
-                    print("image is larger than window... resizing")
+                vp_width = dpg.get_viewport_height()
+                vp_height = dpg.get_viewport_height()
+                if height > vp_height or width > vp_width:
+                    diffW = abs(width-vp_width)
+                    diffH = abs(height-vp_height)
+                    print(f"difference_w:  {diffW}  difference_h: {diffH}")
+                    height = height // 2.5
+                    width = width // 2.5
+                    print(
+                        f"image is larger than window... resizing to {width}x{height}")
+                dpg.set_viewport_height(height)
+                dpg.set_viewport_width(width)
 
-                if parent is None:
-                    print("IMAGE")
-                    self.img_id = dpg.add_image(
-                        texture_id, parent=self.window, id='main_image', width=dpg.get_viewport_width(), height=height)
-                    print(self.img_id)
-                else:
-                    self.img_id = dpg.add_image(texture_id, id='main_image')
+                self.img_id = dpg.add_image(
+                    texture_id, parent="main_window", id='main_image', width=width, height=height, tracked=True)
+
+                print(self.img_id)
 
             # load the image
 
@@ -152,7 +196,7 @@ class ImageViewer:
 
     def quit(self):
         dpg.cleanup_dearpygui()
-        quit()
+        exit(0)
 
 
 if __name__ == '__main__':

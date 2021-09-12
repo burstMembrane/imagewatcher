@@ -8,7 +8,7 @@ import argparse
 
 from watchdog.observers import Observer
 from watchdog.events import PatternMatchingEventHandler
-from imageviewer_pdg import ImageViewer
+from imageviewer_pg import ImageViewer
 import time
 from os import stat
 import logging
