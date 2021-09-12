@@ -6,24 +6,29 @@ from os import environ
 
 
 class ImageViewer:
-    def __init__(self, ObserverThread=""):
+    def __init__(self):
+
         environ['SDL_VIDEO_WINDOW_POS'] = "center"
-        pygame.init()
+
+        # IMAGE SETUP
         self.directory = ""
-        self.ObserverThread = ObserverThread
         self.current_img = 0
         self.img_paths = []
         self.img_path = ''
-        self.lasttxt = ''
+
+        # MOUSE SETUP
         self.mouse_events = [pygame.MOUSEBUTTONDOWN,
                              pygame.MOUSEMOTION, pygame.MOUSEBUTTONUP]
         self.dragging = False
+
+        # WINDOW SETUP
+        pygame.init()
+
         self.window_size = (640, 480)
         self.w, self.h = self.window_size
         wininfo = pygame.display.Info()
         pygame.display._set_autoresize(False)
 
-        logging.debug(f"using driver:  {pygame.display.get_driver()}")
         self.screenW = wininfo.current_w
         self.screenH = wininfo.current_h
         self.gameDisplay = pygame.display.set_mode(
@@ -33,11 +38,14 @@ class ImageViewer:
             "BLACK": (0, 0, 0),
             "WHITE": (255, 255, 255)
         }
-        self.show_info = True
 
         self.clock = pygame.time.Clock()
+        self.firstrun = True
+        self.show_info = False
         self.shouldquit = False
         self.lastimg = pygame.Surface(self.window_size)
+
+        # FONT SETUP
         self.font = pygame.font.Font(pygame.font.match_font('notosans'), 24)
         self.draw_text_centered(
             f"Watching {self.directory} for images")
@@ -51,16 +59,17 @@ class ImageViewer:
         pygame.display.update()
 
     def set_image(self, image_path):
-
+        self.img_path = image_path
+        if self.firstrun:
+            pygame.init()
+            self.firstrun = False
         self.gameDisplay.fill(self.colours["BLACK"])
         if len(image_path) > 0:
             try:
                 self.img = pygame.image.load(image_path).convert_alpha()
             except pygame.error as e:
                 logging.error(e)
-
             imgstring = pygame.image.tostring(self.img, "RGB", True)
-
             if imgstring is not self.lastimg:
                 rect = self.img.get_rect()
                 x, y, w, h = rect
@@ -82,21 +91,20 @@ class ImageViewer:
                     logging.debug(self.img_paths)
 
     def handle_keys(self, key):
-
         if(key == pygame.K_LEFT):
             if len(self.img_paths) > 1:
-                self.current_img -= 1
+
+                self.current_img = self.img_paths.index(self.img_path) - 1
                 self.current_img = max(
-                    self.current_img, len(self.img_paths))
-                logging.debug(f"setting to image:  {self.current_img}")
+                    self.current_img, 0)
+                logging.info(f" K_LEFT setting to image:  {self.current_img}")
                 self.set_image(self.img_paths[self.current_img])
         if(key == pygame.K_RIGHT):
-            if len(self.img_paths) > 1:
+            if len(self.img_paths) > 1 & self.current_img < len(self.img_paths):
                 self.current_img += 1
-                self.current_img = min(
-                    self.current_img, len(self.img_paths))
+
                 self.set_image(
-                    self.current_img)
+                    self.img_paths[self.current_img % len(self.img_paths)])
 
     def draw_text_centered(self, text):
         self.font_surface = self.font.render(

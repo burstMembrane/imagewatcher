@@ -2,12 +2,13 @@
 # pushes most recent file to an array and shows it on screen in borderless window
 # arrow keys to switch between iamges and filename display
 
+from genericpath import isdir
 import time
 import argparse
 
 from watchdog.observers import Observer
 from watchdog.events import PatternMatchingEventHandler
-from imageviewer import ImageViewer
+from imageviewer_pdg import ImageViewer
 import time
 from os import stat
 import logging
@@ -15,10 +16,18 @@ from threading import Thread
 import glob
 import os
 
+
+def is_dir(parser, arg):
+    if not os.path.isdir(arg):
+        parser.error("The dir %s does not exist!" % arg)
+    else:
+        return arg  # the dir path
+
+
 # parse directory argument
 parser = argparse.ArgumentParser()
 parser.add_argument('-d', '--directory',
-                    help="a directory of images to watch for changes", default="", type=str, required=True)
+                    help="a directory of images to watch for changes", default="", type=lambda d: is_dir(parser, d), required=True)
 
 args = parser.parse_args()
 logging.basicConfig(format='[ %(asctime)s.%(msecs)03d ] %(message)s',
@@ -28,7 +37,7 @@ logging.basicConfig(format='[ %(asctime)s.%(msecs)03d ] %(message)s',
 # TODO: ADD FILE MODIFIED EVENT (get all images in folder)
 
 
-class FileCreationWatcher:
+class ImageCreationWatcher:
     def __init__(self, directory="."):
         self.src_path = directory
         self.patterns = ['*.jpeg', '*.png', '*.jpeg']
@@ -37,12 +46,17 @@ class FileCreationWatcher:
             self.images.extend(glob.glob(os.path.join(
                 directory, pattern), recursive=True))
 
-        self.event_handler = FileCreationEvent(images=self.images)
+        self.event_handler = ImageCreationEvent(images=self.images)
         self.event_observer = Observer()
         logging.info(f"Watching directory {directory} for images.")
 
     def run(self):
-        self.start()
+        if os.path.isdir(self.src_path):
+            self.start()
+        else:
+            logging.info(f"{self.src_path} is not a valid directory")
+            self.stop()
+            exit()
         try:
             while True:
                 # logging.info('Checking...')
@@ -66,9 +80,9 @@ class FileCreationWatcher:
         )
 
 
-class FileCreationEvent(PatternMatchingEventHandler):
+class ImageCreationEvent(PatternMatchingEventHandler):
     def __init__(self, images=""):
-        super(FileCreationEvent, self).__init__()
+        super(ImageCreationEvent, self).__init__()
         self.images = images
         self._ignore_directories = True
         self._patterns = ['*.jpeg', '*.png', '*.jpeg']
@@ -109,14 +123,15 @@ class FileCreationEvent(PatternMatchingEventHandler):
 
 viewer = ImageViewer()
 if __name__ == "__main__":
-    f = FileCreationWatcher(directory=args.directory)
-
-    # run the file watcher in a separate thread
-    viewer.directory = args.directory
-    worker = Thread(target=f.run)
-    worker.setDaemon(True)
-    worker.start()
-    viewer.ObserverThread = worker
-    # run the viewer
-    viewer.run()
-    # f.run()
+    # create file watcher
+    if(os.path.isdir(args.directory)):
+        imwatcher = ImageCreationWatcher(directory=args.directory)
+        # run the file watcher in a separate thread
+        viewer.directory = args.directory
+        worker = Thread(target=imwatcher.run)
+        worker.setDaemon(True)
+        worker.start()
+        viewer.run()
+    else:
+        logging.info("Not a valid directory.. Quitting")
+viewer.quit()
