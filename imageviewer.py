@@ -1,21 +1,13 @@
 #!/usr/bin/python3
-
-
 import pygame
 from pygame.locals import NOFRAME, VIDEORESIZE, DOUBLEBUF, HWSURFACE
 import logging
 from os import environ
-from os.path import abspath
-from pygame._sdl2.video import Window
-environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
-
-logging.debug(Window)
 
 
 class ImageViewer:
     def __init__(self, ObserverThread=""):
         environ['SDL_VIDEO_WINDOW_POS'] = "center"
-
         pygame.init()
         self.directory = ""
         self.ObserverThread = ObserverThread
@@ -179,9 +171,9 @@ class ImageViewer:
 
 
 if __name__ == '__main__':
+    # test
     viewer = ImageViewer()
     while not viewer.shouldquit:
         viewer.set_image('test.jpeg')
         viewer.run()
-
     viewer.quit()
