@@ -27,12 +27,11 @@ class ImageViewer:
         self.window_size = (640, 480)
         self.w, self.h = self.window_size
         wininfo = pygame.display.Info()
-        pygame.display._set_autoresize(False)
 
         self.screenW = wininfo.current_w
         self.screenH = wininfo.current_h
         self.gameDisplay = pygame.display.set_mode(
-            self.window_size, NOFRAME)
+            self.window_size)
 
         self.colours = {
             "BLACK": (0, 0, 0),
