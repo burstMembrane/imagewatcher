@@ -8,7 +8,11 @@ import argparse
 
 from watchdog.observers import Observer
 from watchdog.events import PatternMatchingEventHandler
+<<<<<<< HEAD
 from imageviewer_pdg import ImageViewer
+=======
+from imageviewer_pg import ImageViewer
+>>>>>>> master
 import time
 from os import stat
 import logging
@@ -95,7 +99,11 @@ class ImageCreationEvent(PatternMatchingEventHandler):
         last_size, size = -1, 0
         while size != last_size:
             time.sleep(0.1)
-            last_size, size = size, stat(file).st_size
+            try:
+                last_size, size = size, stat(file).st_size
+            except FileNotFoundError:
+                logging.error(f"wait_for_size: file was moved or deleted")
+                return False
             if(size == last_size):
                 return True
 
@@ -110,12 +118,14 @@ class ImageCreationEvent(PatternMatchingEventHandler):
         # do something when the file is created
         if event.src_path.split('.')[-1] in self.filetypes:
             logging.info(f"loading image at {event.src_path}")
+
             if self.wait_for_size(event.src_path):
 
                 viewer.set_image(event.src_path)
                 if viewer.show_info:
                     viewer.text = event.src_path
                     viewer.display_info(event.src_path)
+
         else:
 
             logging.info('not an image:  skipping')

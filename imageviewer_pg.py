@@ -1,20 +1,20 @@
 #!/usr/bin/python3
 import pygame
-from pygame.locals import NOFRAME, VIDEORESIZE, DOUBLEBUF, HWSURFACE
+from pygame.locals import NOFRAME, VIDEORESIZE, DOUBLEBUF, HWSURFACE, RESIZABLE
 import logging
 from os import environ
+from PIL import Image
 
 
 class ImageViewer:
     def __init__(self):
-
-        environ['SDL_VIDEO_WINDOW_POS'] = "center"
 
         # IMAGE SETUP
         self.directory = ""
         self.current_img = 0
         self.img_paths = []
         self.img_path = ''
+        self.img = []
 
         # MOUSE SETUP
         self.mouse_events = [pygame.MOUSEBUTTONDOWN,
@@ -23,16 +23,16 @@ class ImageViewer:
 
         # WINDOW SETUP
         pygame.init()
+        wininfo = pygame.display.Info()
+        print(wininfo)
+        self.screenW = wininfo.current_w
+        self.screenH = wininfo.current_h
 
         self.window_size = (640, 480)
         self.w, self.h = self.window_size
-        wininfo = pygame.display.Info()
+        self.imageW, self.imageH = self.window_size
 
-        self.screenW = wininfo.current_w
-        self.screenH = wininfo.current_h
-        self.gameDisplay = pygame.display.set_mode(
-            self.window_size)
-
+        self.init_window(self.w, self.h)
         self.colours = {
             "BLACK": (0, 0, 0),
             "WHITE": (255, 255, 255)
@@ -49,13 +49,53 @@ class ImageViewer:
         self.draw_text_centered(
             f"Watching {self.directory} for images")
 
+    def init_window(self, width, height):
+
+        windowX = (self.screenW//2) - (width//2)
+        windowY = (self.screenH//2) - (height//2)
+        logging.info(
+            f"setting window  for {self.img_path} pos to: {windowX},{windowY}")
+        environ['SDL_VIDEO_WINDOW_POS'] = f"{windowX},{windowY}"
+        environ['SDL_VIDEO_CENTERD'] = "1"
+        self.gameDisplay = pygame.display.set_mode(
+            (width, height), NOFRAME | RESIZABLE)
+
+    def resize_image(self, image, windowW, windowH):
+        center_image = False
+
+        image_w, image_h = image.get_size()
+
+        screen_aspect_ratio = windowW / windowH
+        photo_aspect_ratio = image_w / image_h
+        logging.debug(
+            f"screen aspect ratio:  {screen_aspect_ratio} \n photo aspect_ratio:  {photo_aspect_ratio}")
+        if screen_aspect_ratio < photo_aspect_ratio:  # Width is binding
+            new_image_w = windowW
+            new_image_h = int(windowW / photo_aspect_ratio)
+            image = pygame.transform.scale(image, (new_image_w, new_image_h))
+
+        elif screen_aspect_ratio > photo_aspect_ratio:  # Height is binding
+            new_image_h = windowH
+            new_image_w = int(new_image_h * photo_aspect_ratio)
+            # image = pygame.transform.scale(image, (new_image_w, new_image_h))
+            image_x = (windowW - new_image_w) // 2 if center_image else 0
+            image_y = 0
+
+        else:  # Images have the same aspect ratio
+            new_image_w = windowW
+            new_image_h = windowH
+            image_x = 0
+            image_y = 0
+
+        return (new_image_w, new_image_h)
+
     def show_image(self):
         self.img = pygame.image.load(self.img_path).convert_alpha()
         self.gameDisplay.blit(self.img, (0, 0))
 
     def clear(self):
         self.gameDisplay.fill(self.colours["BLACK"])
-        pygame.display.update()
+        pygame.display.flip()
 
     def set_image(self, image_path):
         self.img_path = image_path
@@ -65,26 +105,33 @@ class ImageViewer:
         self.gameDisplay.fill(self.colours["BLACK"])
         if len(image_path) > 0:
             try:
-                self.img = pygame.image.load(image_path).convert_alpha()
+                self.pil_img = Image.open(image_path)
+
+                w = self.pil_img.width
+                h = self.pil_img.height
+
+                self.img = pygame.image.load(
+                    image_path).convert_alpha()
+                logging.debug(self.img)
             except pygame.error as e:
                 logging.error(e)
-            imgstring = pygame.image.tostring(self.img, "RGB", True)
-            if imgstring is not self.lastimg:
-                rect = self.img.get_rect()
-                x, y, w, h = rect
+            rect = self.img.get_rect()
+            x, y, w, h = rect
+            logging.debug(rect)
+            if w != self.imageW or h != self.imageH:
                 if w > self.screenW or h > self.screenH:
-                    self.img = pygame.transform.scale(
-                        self.img, (w//2, h//2))
-                    w = w//2
-                    h = h//2
 
-                if self.window_size[0] != w or self.window_size[1] != h:
-                    self.gameDisplay = pygame.display.set_mode(
-                        (w, h), NOFRAME | DOUBLEBUF | HWSURFACE)
-                self.window_size = (w, h)
-                self.gameDisplay.blit(self.img, (0, 0))
-                self.last_img = imgstring
-                pygame.display.update()
+                    diff = abs((self.screenW/self.screenH) / (w / h))
+                    logging.info(f"DIFF:   {diff}")
+                    w = round(w / diff)
+                    h = round(h / diff)
+
+                    self.img = pygame.transform.scale(
+                        self.img, (int(w), int(h)))
+                self.imageW = w
+                self.imageH = h
+                pygame.event.post(pygame.event.Event(
+                    VIDEORESIZE, {"size": (w, h), "w": w, "h": h}))
                 if image_path not in self.img_paths:
                     self.img_paths.append(image_path)
                     logging.debug(self.img_paths)
@@ -135,9 +182,9 @@ class ImageViewer:
                 logging.debug("mouse up")
                 self.dragging = False
 
-        elif event.type == pygame.MOUSEMOTION and self.dragging:
+        # elif event.type == pygame.MOUSEMOTION and self.dragging:
 
-            mouse_x, mouse_y = event.pos
+            # mouse_x, mouse_y = event.pos
             # environ['SDL_VIDEO_WINDOW_POS'] = "{},{}".format(
             #     mouse_x, mouse_y)
             # set window position
@@ -163,11 +210,22 @@ class ImageViewer:
                         self.shouldquit = True
                         self.quit()
                     elif event.type == VIDEORESIZE:
-                        pass
-                        # self.gameDisplay.blit(pygame.transform.scale(
-                        #     self.img, event.dict['size']), (0, 0))
+                        print(event.dict)
+                        if "size" in event.dict.keys():
+                            event_w, event_h = event.dict["size"]
 
-                self.clock.tick(30)
+                            if self.img:
+                                w, h = self.resize_image(
+                                    self.img, event_w, event_h)
+                                image = pygame.transform.scale(
+                                    self.img, (w, h))
+
+                                self.gameDisplay = pygame.display.set_mode(
+                                    (w, h),  NOFRAME)
+                                self.gameDisplay.blit(image, (0, 0))
+                                pygame.display.flip()
+
+                self.clock.tick(2)
             except KeyboardInterrupt or SystemExit:
                 logging.info("quitting...")
                 self.quit()
