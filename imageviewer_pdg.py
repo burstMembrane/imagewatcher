@@ -29,8 +29,8 @@ class ImageViewer:
                 f = line.find("primary")
                 logging.debug(f)
 
-        self.window_size = (1920,
-                            1080)
+        self.window_size = (640,
+                            480)
 
         self.w, self.h = self.window_size
 
@@ -76,7 +76,7 @@ class ImageViewer:
         self.shouldquit = False
         self.init_dialog_selector()
 
-        # self.init_menu_bar()
+        self.init_menu_bar()
 
     def init_menu_bar(self):
         with dpg.menu_bar(parent="main_window", id="menu_bar"):
