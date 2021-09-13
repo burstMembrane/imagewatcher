@@ -76,7 +76,7 @@ class ImageViewer:
         self.shouldquit = False
         self.init_dialog_selector()
 
-        self.init_menu_bar()
+        # self.init_menu_bar()
 
     def init_menu_bar(self):
         with dpg.menu_bar(parent="main_window", id="menu_bar"):
