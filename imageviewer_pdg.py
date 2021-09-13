@@ -4,6 +4,10 @@ import logging
 from os import environ, path
 import dearpygui.dearpygui as dpg
 from sys import exit
+from subprocess import check_output
+import time
+import statistics
+import logging
 
 
 class ImageViewer:
@@ -15,15 +19,27 @@ class ImageViewer:
         self.img_paths = []
         self.img_path = ''
         self.paddingW = 0
-        self.paddingH = 50
-        self.window_size = (1280,
-                            720)
+        self.paddingH = 70
+        self.dragTimer = 0.0
+        self.drag_x = []
+        self.drag_y = []
+        screeninfo = check_output(["/usr/bin/xrandr"])
+        for line in screeninfo.decode().split("\n"):
+            if "primary" in line:
+                f = line.find("primary")
+                logging.debug(f)
+
+        self.window_size = (1920,
+                            1080)
+
         self.w, self.h = self.window_size
+
         # create viewport takes in config options too!
         self.viewport = dpg.create_viewport(
-            title='Image Viewer', width=self.w, height=self.h, decorated=False, resizable=False)
+            title='Image Viewer', width=self.w, height=self.h, decorated=False, resizable=True, clear_color=[0, 0, 0, 0])
 
         dpg.set_viewport_max_height(1080)
+        dpg.set_viewport_clear_color([0.0, 0.0, 0.0, 0.0])
 
         # MOUSE SETUP
         dpg.setup_dearpygui(viewport=self.viewport)
@@ -31,19 +47,36 @@ class ImageViewer:
 
         dpg.setup_registries()
 
-        print(
+        logging.debug(
             f"vp_client_w: {self.w} vp_client_h:  {self.h}")
-        dpg.set_viewport_pos([100, 300])
+
         # WINDOW SETUP
-
-        with dpg.window(label="Imagewatcher", collapsed=True, modal=False, width=self.window_size[0], height=self.window_size[1], id="main_window", no_scrollbar=True) as w:
+        dpg.set_viewport_always_top(True)
+        with dpg.window(label="Imagewatcher",  collapsed=True, modal=False, width=self.w, height=self.h, id="main_window", no_scrollbar=True, no_background=True) as w:
             self.window = w
+        with dpg.theme(id="theme_id"):
+            dpg.add_theme_style(dpg.mvStyleVar_ScrollbarSize,
+                                0)
+            dpg.add_theme_style(dpg.mvStyleVar_WindowPadding,
+                                0)
+            dpg.add_theme_color(dpg.mvThemeCol_WindowBg,
+                                (0, 0, 0, 0))
+            dpg.add_theme_color(dpg.mvThemeCol_Border,
+                                (0, 0, 0, 0))
+            dpg.add_theme_style(dpg.mvStyleVar_Alpha,)
 
+        dpg.set_item_theme("main_window", "theme_id")
+        # dpg.set_item_theme(self.viewport, "theme_id")
+        dpg.set_viewport_clear_color([0, 0.0, 0.0, 0.0])
+        logging.debug(dpg.get_viewport_configuration(dpg.mvThemeCol_WindowBg))
         dpg.set_primary_window("main_window", True)
+        dpg.add_key_press_handler(callback=self.handle_keys)
+        dpg.add_mouse_drag_handler(callback=self.handle_windowdrag)
         self.show_info = False
         self.shouldquit = False
         self.init_dialog_selector()
-        self.init_menu_bar()
+
+        # self.init_menu_bar()
 
     def init_menu_bar(self):
         with dpg.menu_bar(parent="main_window", id="menu_bar"):
@@ -53,20 +86,44 @@ class ImageViewer:
                 dpg.add_menu_item(label="Quit", callback=self.quit)
             with dpg.menu(label="IMAGEWATCHER v0.1", parent="menu_bar", indent=self.w-150):
                 dpg.add_menu_item(
-                    label="About", callback=lambda: print("hello"))
+                    label="About", callback=lambda: logging.debug("hello"))
+    # define moving average function
 
-    def handle_windowdrag(self, sender, app_data, user_data):
-        self.print_cb_data(sender, app_data, user_data)
+    def handle_windowdrag(self, sender, dragpos, user_data):
+
+        if self.dragTimer == 0:
+            self.dragTimer = time.time()
+        logging.debug(self.dragTimer)
+        # self.print_cb_data(sender, dragpos, user_data)
+        currX, currY = dpg.get_item_pos("main_window")
+        if(currX == 100):
+            self.dragTimer = 0
+        posX = dragpos[1]
+        posY = dragpos[2]
+        self.drag_x.append(posX)
+        self.drag_y.append(posY)
+        meanX = statistics.mean(self.drag_x)
+        meanY = statistics.mean(self.drag_y)
+        logging.debug(f"dragpos {posX,posY} currPos{currX, currY}")
+
+        if(time.time() - self.dragTimer > 0.1):
+
+            dpg.set_viewport_pos(
+                [meanX,  meanY])
+
+            self.dragTimer = 0.0
+            self.drag_x.clear()
+            self.drag_y.clear()
 
     def print_cb_data(self, sender, app_data, user_data):
-        print(f"sender is: {sender}")
-        print(f"app_data is: {app_data}")
-        print(f"user_data is: {user_data}")
+        logging.debug(f"sender is: {sender}")
+        logging.debug(f"app_data is: {app_data}")
+        logging.debug(f"user_data is: {user_data}")
 
     def handle_dialog(self, sender, app_data, user_data):
         self.directory = path.join(
             app_data["file_path_name"], app_data["file_name"])
-        print(f"setting dir to {self.directory}")
+        logging.debug(f"setting dir to {self.directory}")
         dpg.add_text(f"watching.. {self.directory}", parent="main_window")
 
     def init_dialog_selector(self):
@@ -77,7 +134,8 @@ class ImageViewer:
             dpg.add_file_extension(".cpp", color=(255, 255, 0, 255))
             dpg.add_file_extension(".h", color=(
                 255, 0, 255, 255), custom_text="header")
-            dpg.add_file_extension("Python(.py){.py}", color=(0, 255, 0, 255))
+            dpg.add_file_extension(
+                "Python(.py){.py}", color=(0, 255, 0, 255))
 
     def show_image(self):
         """ Loads the image and adds it to the window"""
@@ -88,100 +146,67 @@ class ImageViewer:
     def set_image(self, image_path):
         if self.img_id > 0:
             dpg.delete_item("main_image")
-        print("setting image")
+        dpg.hide_item("main_window")
+        logging.debug("setting image")
         self.img_path = image_path
         #  clear the screen
         if len(image_path) > 0:
             width, height, channels, data = dpg.load_image(image_path)
+
             with dpg.texture_registry() as reg_id:
                 texture_id = dpg.add_static_texture(
                     width, height, data, parent=reg_id)
-                vp_width = dpg.get_viewport_height()
-                vp_height = dpg.get_viewport_height()
+                vp_width = self.w
+                vp_height = self.h
                 if height > vp_height or width > vp_width:
-                    diffW = abs(width-vp_width)
-                    diffH = abs(height-vp_height)
-                    print(f"difference_w:  {diffW}  difference_h: {diffH}")
-                    height = height // 2.5
-                    width = width // 2.5
-                    print(
+                    diff = abs((vp_width/vp_height) / (width/height)) + 0.5
+
+                    logging.debug(f"difference:  {diff}")
+                    height = height / diff
+                    width = width / diff
+                    logging.debug(
                         f"image is larger than window... resizing to {width}x{height}")
+
                 dpg.set_viewport_height(height)
                 dpg.set_viewport_width(width)
 
                 self.img_id = dpg.add_image(
-                    texture_id, parent="main_window", id='main_image', width=width, height=height, tracked=True)
+                    texture_id, parent="main_window", id='main_image', width=width, height=height)
 
-                print(self.img_id)
+                logging.debug(self.img_id)
 
             # load the image
-
+            dpg.show_item("main_window")
             if image_path not in self.img_paths:
                 self.img_paths.append(image_path)
-                logging.debug(self.img_paths)
+                logging.info(self.img_paths)
 
-    def handle_keys(self, key):
-        pass
-        # if(key == pygame.K_LEFT):
-        #     if len(self.img_paths) > 1:
+    def handle_keys(self, sender, key, user_data):
+        self.print_cb_data(sender, key, user_data)
+        if (key == 265):
+            logging.debug("jumping to start of images")
+            self.set_image(self.img_paths[0])
+        if (key == 264):
+            logging.debug("jumping to end of images")
+            self.set_image(self.img_paths[-1])
+        if(key == 262):
+            logging.debug("pressed right")
+            if len(self.img_paths) > 1:
 
-        #         self.current_img = self.img_paths.index(self.img_path) - 1
-        #         self.current_img = max(
-        #             self.current_img, 0)
-        #         logging.info(f" K_LEFT setting to image:  {self.current_img}")
-        #         self.set_image(self.img_paths[self.current_img])
-        # if(key == pygame.K_RIGHT):
-        #     if len(self.img_paths) > 1 & self.current_img < len(self.img_paths):
-        #         self.current_img += 1
+                self.current_img = self.img_paths.index(self.img_path) - 1
+                self.current_img = max(
+                    self.current_img, 0)
+                logging.info(f" K_LEFT setting to image:  {self.current_img}")
+                self.set_image(self.img_paths[self.current_img])
+        if(key == 263):
+            if len(self.img_paths) > 1 & self.current_img < len(self.img_paths):
+                self.current_img += 1
 
-        #         self.set_image(
-        #             self.img_paths[self.current_img % len(self.img_paths)])
+                self.set_image(
+                    self.img_paths[self.current_img % len(self.img_paths)])
+        if(key == 256):
 
-    def draw_text_centered(self, text):
-        pass
-        # self.font_surface = self.font.render(
-        #     text, True, (255, 255, 255), self.colours["BLACK"])
-        # text_rect = self.font_surface.get_rect(center=(self.w//2, self.h/2))
-        # self.gameDisplay.blit(self.font_surface, text_rect)
-        # pygame.display.update()
-
-    def display_info(self, text):
-        pass
-        # if self.show_info:
-        #     self.font_surface = self.font.render(
-        #         text, True, (255, 255, 255), self.colours["BLACK"])
-        #     self.gameDisplay.blit(self.font_surface, (10, 10))
-        #     pygame.display.update()
-        # else:
-        #     self.clear_font_surface()
-
-    def handle_mouse(self, event):
-        pass
-        # if event.type == pygame.MOUSEBUTTONDOWN:
-        #     # logging.debug(f"button: {event.button}\npos: {event.pos}")
-        #     if event.button == 1:
-        #         logging.debug("mouse down!")
-        #         self.dragging = True
-        #         mouse_x, mouse_y = event.pos
-
-        # elif event.type == pygame.MOUSEBUTTONUP:
-        #     if event.button == 1:
-        #         logging.debug("mouse up")
-        #         self.dragging = False
-
-        # elif event.type == pygame.MOUSEMOTION and self.dragging:
-
-        # mouse_x, mouse_y = event.pos
-        # environ['SDL_VIDEO_WINDOW_POS'] = "{},{}".format(
-        #     mouse_x, mouse_y)
-        # set window position
-
-    def clear_font_surface(self):
-        pass
-        # current_surface = pygame.display.get_surface()
-        # self.font_surface = pygame.Surface((0, 0))
-        # self.gameDisplay.blit(self.font_surface, (10, 10))
-        # pygame.display.update()
+            self.quit()
 
     def run(self):
         while dpg.is_dearpygui_running():
@@ -195,16 +220,15 @@ class ImageViewer:
                 self.quit()
 
     def quit(self):
+        logging.debug("quitting...")
+        dpg.stop_dearpygui()
         dpg.cleanup_dearpygui()
-        exit(0)
 
 
 if __name__ == '__main__':
     # test
     viewer = ImageViewer()
     viewer.set_image('test.jpeg')
-    # worker = Thread(target=viewer.run)
-    # worker.setDaemon(True)
-    # worker.start()
+
     viewer.run()
     viewer.quit()
