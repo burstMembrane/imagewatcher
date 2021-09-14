@@ -40,14 +40,14 @@ class ImageViewer:
 
         self.clock = pygame.time.Clock()
         self.firstrun = True
-        self.show_info = False
+        self.show_info = True
         self.shouldquit = False
         self.lastimg = pygame.Surface(self.window_size)
 
         # FONT SETUP
         self.font = pygame.font.Font(pygame.font.match_font('notosans'), 24)
         self.draw_text_centered(
-            f"Watching {self.directory} for images")
+            f"Watching {self.text} for images")
 
     def init_window(self, width, height):
 

@@ -116,11 +116,7 @@ class ImageCreationEvent(PatternMatchingEventHandler):
             logging.info(f"loading image at {event.src_path}")
 
             if self.wait_for_size(event.src_path):
-
                 viewer.set_image(event.src_path)
-                if viewer.show_info:
-                    viewer.text = event.src_path
-                    viewer.display_info(event.src_path)
 
         else:
 

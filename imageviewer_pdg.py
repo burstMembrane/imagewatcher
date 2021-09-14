@@ -52,7 +52,7 @@ class ImageViewer:
 
         # WINDOW SETUP
         dpg.set_viewport_always_top(True)
-        with dpg.window(label="Imagewatcher",  collapsed=True, modal=False, width=self.w, height=self.h, id="main_window", no_scrollbar=True, no_background=True) as w:
+        with dpg.window(label="Imagewatcher",  collapsed=True, modal=True, width=self.w, height=self.h, id="main_window", no_scrollbar=True, no_background=True) as w:
             self.window = w
         with dpg.theme(id="theme_id"):
             dpg.add_theme_style(dpg.mvStyleVar_ScrollbarSize,
@@ -72,7 +72,7 @@ class ImageViewer:
         dpg.set_primary_window("main_window", True)
         dpg.add_key_press_handler(callback=self.handle_keys)
         dpg.add_mouse_drag_handler(callback=self.handle_windowdrag)
-        self.show_info = False
+        self.show_info = True
         self.shouldquit = False
         self.init_dialog_selector()
 
@@ -124,7 +124,6 @@ class ImageViewer:
         self.directory = path.join(
             app_data["file_path_name"], app_data["file_name"])
         logging.debug(f"setting dir to {self.directory}")
-        dpg.add_text(f"watching.. {self.directory}", parent="main_window")
 
     def init_dialog_selector(self):
         with dpg.file_dialog(directory_selector=True, modal=True, show=False, callback=self.handle_dialog, id="directory_dialog"):
@@ -146,6 +145,7 @@ class ImageViewer:
     def set_image(self, image_path):
         if self.img_id > 0:
             dpg.delete_item("main_image")
+            dpg.delete_item("text")
         dpg.hide_item("main_window")
         logging.debug("setting image")
         self.img_path = image_path
@@ -171,7 +171,12 @@ class ImageViewer:
                 dpg.set_viewport_width(width)
 
                 self.img_id = dpg.add_image(
-                    texture_id, parent="main_window", id='main_image', width=width, height=height)
+                    texture_id, parent="main_window", id='main_image', width=width, height=height, label=self.img_path)
+                if self.show_info:
+                    dpg.add_text(f"filename: {self.img_path}",
+                                 parent="main_window", id="text", before="main_image")
+                    w = dpg.get_item_width("text")
+                    h = dpg.get_item_height("text")
 
                 logging.debug(self.img_id)
 
