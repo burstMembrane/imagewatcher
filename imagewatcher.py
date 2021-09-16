@@ -38,7 +38,11 @@ parser = argparse.ArgumentParser()
 parser.add_argument('-d', '--directory',
                     help="a directory of images to watch for changes", default="", type=lambda d: is_dir(parser, d), required=True)
 parser.add_argument('-b', '--backend',
-                    help="dearpygui ro pygame as backend", default="pdg", type=lambda d: check_backend(parser, d), required=False)
+                    help="dearpygui or pygame as backend", default="pdg", type=lambda d: check_backend(parser, d), required=False)
+
+parser.add_argument('-v', '--debug',
+                    help="log debug messages to console", default=False, type=bool, required=False)
+
 
 args = parser.parse_args()
 logging.basicConfig(format='[ %(asctime)s.%(msecs)03d ] %(message)s',
@@ -104,8 +108,9 @@ class ImageCreationEvent(PatternMatchingEventHandler):
         logging.info(f"watching for filetypes:  {' '.join(self.filetypes)}")
 
     def on_deleted(self, event):
+        logging.info(f"file deleted at {event.src_path}")
         new_file_path = event.src_path
-        viewer.remove_img(new_file_path)
+        viewer.remove_image(os.path.basename(new_file_path))
 
     def wait_for_size(self, file):
         last_size, size = -1, 0

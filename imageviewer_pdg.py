@@ -22,15 +22,16 @@ class ImageViewerPDG:
         self.img_paths = []
         self.fullscreen = False
         self.img_path = ''
-
+        self.paddingH = 70
         self.dragTimer = 0.0
         self.lastPosX = 0
         self.lastPosY = 0
         self.show_info = True
         self.shouldquit = False
+        self.text_added = False
 
-        self.w, self.h = (640, 480)
-        self.storedW, self.storedH = (640, 480)
+        self.w, self.h = (1024, 768)
+        self.storedW, self.storedH = (1024, 768)
         self.vMinW, self.vMinH = (300, 300)
         self.vPos = (self.w//2, self.h//2)
         self.imageW, self.imageH = self.vPos
@@ -38,6 +39,17 @@ class ImageViewerPDG:
         self.init_viewport()
         self.init_window()
         self.init_dpg()
+        self.icon_path = "assets/imagewatcher.png"
+        self.set_image(self.icon_path)
+        self.init_icon_img()
+
+    def init_icon_img(self):
+        dpg.set_viewport_width(self.imageW + 80)
+        width, height, channels, data = dpg.load_image(self.icon_path)
+        if dpg.get_item_pos("main_image")[0] == 0:
+            dpg.set_item_pos("main_image", [40, 120])
+        else:
+            dpg.set_item_pos("main_image", [0, 120])
 
     def init_dpg(self):
         dpg.setup_registries()
@@ -85,6 +97,8 @@ class ImageViewerPDG:
     def set_directory(self, path, files):
         self.directory = path
         self.img_paths = files
+        # if (len(files) > 0):
+        #     self.set_image(self.img_paths[-1])
 
     def center_viewport(self, xoff=0, yoff=0):
 
@@ -108,13 +122,13 @@ class ImageViewerPDG:
                     label="About", callback=lambda: logging.debug("hello"))
 
     def handle_windowdrag(self, sender, dragpos, user_data):
-        thresh = 5
+        thresh = 0.5
         if self.dragTimer == 0:
             self.dragTimer = time.time()
             self.lastPosX = dragpos[1]
             self.lastPosY = dragpos[2]
 
-        if(time.time() - self.dragTimer > 0.03):
+        if(time.time() - self.dragTimer > 0.01):
             logging.debug(self.dragTimer)
             # self.print_cb_data(sender, dragpos, user_data)
             currX, currY = dpg.get_viewport_pos()
@@ -154,9 +168,10 @@ class ImageViewerPDG:
 
     def set_image(self, image_path):
         if image_path != self.img_path:
-            if self.img_id > 0:
+            if self.img_id > 0 and image_path != self.icon_path:
                 dpg.delete_item("main_image")
-                dpg.delete_item("text")
+                if self.text_added:
+                    dpg.delete_item("text")
             dpg.hide_item("main_window")
 
             logging.debug("setting image")
@@ -200,19 +215,22 @@ class ImageViewerPDG:
                     self.texture_id, parent="main_window", id='main_image', width=width, height=height, label=self.img_path, pos=pos)
                 self.imageW = width
                 self.imageH = height
-                if self.show_info:
+                if self.show_info and image_path is not self.icon_path:
                     dpg.add_text(f"File: {self.img_path} Size: {self.imageW}x{self.imageH}",
                                  parent="main_window", id="text", before="main_image")
+                    self.text_added = True
                 logging.debug(self.img_id)
                 # load the image
                 dpg.show_item("main_window")
-                if image_path not in self.img_paths:
+                if image_path not in self.img_paths and image_path != self.icon_path:
                     self.img_paths.append(image_path)
                     logging.info(self.img_paths)
 
     def toggle_fullscreen(self):
         self.fullscreen = not self.fullscreen
         if self.fullscreen:
+            self.storedW = dpg.get_viewport_width()
+            self.storedH = dpg.get_viewport_height()
             dpg.set_viewport_resizable(True)
             time.sleep(0.05)
             dpg.configure_viewport(dpg.get_viewport_title(
@@ -225,40 +243,53 @@ class ImageViewerPDG:
                     "main_image", [self.clientW//2 - self.imageW//2, self.clientH//2 - self.imageH//2])
         else:
             dpg.configure_viewport(dpg.get_viewport_title(
-            ),  width=self.imageW if self.imageW else self.w, height=self.imageH if self.imageH else self.h, position=[self.storedW, self.storedH])
+            ),  width=self.imageW if self.imageW else self.storedW, height=self.imageH if self.imageH else self.storedH, position=[self.storedW, self.storedH])
             time.sleep(0.1)
             dpg.set_viewport_resizable(False)
             self.center_viewport(xoff=self.w//2, yoff=self.h//2)
             if self.img_id:
                 dpg.set_item_width("main_image", self.imageW)
                 dpg.set_item_height("main_image", self.imageH)
-                dpg.set_item_pos(
-                    "main_image", [0, 0])
+                if self.img_path != self.icon_path:
+                    dpg.set_item_pos(
+                        "main_image", [0, 0])
+                else:
+                    self.init_icon_img()
 
     def handle_keys(self, sender, key, user_data):
         self.print_cb_data(sender, key, user_data)
         if key == dpg.mvKey_F:
             self.toggle_fullscreen()
-        if (key == dpg.mvKey_Up):
-            logging.info(f"jumping to start of images {self.img_paths[0]}")
-            self.set_image(self.img_paths[0])
-        if (key == dpg.mvKey_Down):
-            logging.info(f"jumping to end of images:  {self.img_paths[-1]}")
-            self.set_image(self.img_paths[-1])
-        if(key == dpg.mvKey_Right):
-            logging.debug("pressed right")
-            if len(self.img_paths) > 1 and self.img_path != '':
-                self.current_img = self.img_paths.index(self.img_path) - 1
-                self.current_img = max(
-                    self.current_img, 0)
-                logging.info(f" K_LEFT setting to image:  {self.current_img}")
-                self.set_image(self.img_paths[self.current_img])
-        if(key == dpg.mvKey_Left):
-            if len(self.img_paths) > 1 & self.current_img < len(self.img_paths) and self.img_path != '':
-                self.current_img = self.img_paths.index(self.img_path) + 1
-                self.set_image(
-                    self.img_paths[self.current_img % len(self.img_paths)])
-                logging.info(f" K_RIGHT setting to image:  {self.current_img}")
+
+        if self.img_path != self.icon_path:
+            if (key == dpg.mvKey_Up):
+                logging.info(f"jumping to start of images {self.img_paths[0]}")
+
+                self.set_image(self.img_paths[0])
+
+            if (key == dpg.mvKey_Down):
+                logging.info(
+                    f"jumping to end of images:  {self.img_paths[-1]}")
+                try:
+                    self.set_image(self.img_paths[-1])
+                except:
+                    pass
+            if(key == dpg.mvKey_Right):
+                logging.debug("pressed right")
+                if len(self.img_paths) > 1 and self.img_path != '':
+                    self.current_img = self.img_paths.index(self.img_path) - 1
+                    self.current_img = max(
+                        self.current_img, 0)
+                    logging.info(
+                        f" K_LEFT setting to image:  {self.current_img}")
+                    self.set_image(self.img_paths[self.current_img])
+            if(key == dpg.mvKey_Left):
+                if len(self.img_paths) > 1 & self.current_img < len(self.img_paths) and self.img_path != '':
+                    self.current_img = self.img_paths.index(self.img_path) + 1
+                    self.set_image(
+                        self.img_paths[self.current_img % len(self.img_paths)])
+                    logging.info(
+                        f" K_RIGHT setting to image:  {self.current_img}")
         if(key == dpg.mvKey_Escape):
             self.quit()
 
