@@ -29,6 +29,7 @@ class ImageViewerPDG:
         self.show_info = True
         self.shouldquit = False
         self.text_added = False
+        self.intro_text = 0
 
         self.w, self.h = (1024, 768)
         self.storedW, self.storedH = (1024, 768)
@@ -43,15 +44,27 @@ class ImageViewerPDG:
             "~/.config/imagewatcher/imagewatcher.png")
         print(self.icon_path)
         self.set_image(self.icon_path)
-        self.init_icon_img()
+
+        # get icon pos
 
     def init_icon_img(self):
         dpg.set_viewport_width(self.imageW + 80)
 
         if dpg.get_item_pos("main_image")[0] == 0:
-            dpg.set_item_pos("main_image", [40, 120])
+            dpg.set_item_pos("main_image", [40, 100])
         else:
-            dpg.set_item_pos("main_image", [0, 120])
+            dpg.set_item_pos("main_image", [0, 100])
+        self.position_intro_text()
+
+    def position_intro_text(self):
+        x, y = dpg.get_item_pos("main_image")
+        w = dpg.get_item_width("main_image")
+        h = dpg.get_item_height("main_image")
+        print(w, h)
+        dpg.set_global_font_scale(1.5)
+        if self.intro_text == 0:
+            self.intro_text = dpg.add_text(f"watching directory: {os.path.join(os.getcwd(), self.directory)} for changes...",
+                                           parent="main_window", id="intro_text", pos=[x, y+h], tracked=True, track_offset=0, wrap=w+20)
 
     def init_dpg(self):
         dpg.setup_registries()
@@ -65,9 +78,6 @@ class ImageViewerPDG:
         dpg.set_viewport_clear_color([0.0, 0.0, 0.0, 0.0])
         # MOUSE SETUP
         dpg.setup_dearpygui(viewport=self.viewport)
-
-        config = dpg.get_viewport_configuration(dpg.mvThemeCol_WindowBg)
-
         self.center_viewport(xoff=self.w//2, yoff=self.h//2)
         logging.debug(f"clientW:  {self.clientW} \n clientH: {self.clientH}")
         dpg.set_viewport_clear_color([0, 0.0, 0.0, 0.0])
@@ -84,13 +94,12 @@ class ImageViewerPDG:
             dpg.add_theme_style(dpg.mvStyleVar_WindowPadding,
                                 0)
             dpg.add_theme_color(dpg.mvThemeCol_WindowBg,
-                                (0, 0, 0, 0))
+                                (15, 15, 15, 0))
             dpg.add_theme_color(dpg.mvThemeCol_Border,
                                 (0, 0, 0, 0))
 
         dpg.set_item_theme("main_window", "theme_id")
         dpg.set_primary_window("main_window", True)
-        # dpg.set_item_theme(self.viewport, "theme_id")
 
     def remove_image(self, path):
         if path in self.img_paths:
@@ -99,8 +108,8 @@ class ImageViewerPDG:
     def set_directory(self, path, files):
         self.directory = path
         self.img_paths = files
-        # if (len(files) > 0):
-        #     self.set_image(self.img_paths[-1])
+        time.sleep(1)
+        self.init_icon_img()
 
     def center_viewport(self, xoff=0, yoff=0):
 
@@ -169,12 +178,17 @@ class ImageViewerPDG:
                 "Python(.py){.py}", color=(0, 255, 0, 255))
 
     def set_image(self, image_path):
+        print(f"img_id:  {self.img_id}")
         if image_path != self.img_path:
-            if self.img_id > 0 and image_path != self.icon_path:
+            if self.img_id > 0:
                 dpg.delete_item("main_image")
+
+                if self.intro_text > 0:
+                    dpg.hide_item(self.intro_text)
                 if self.text_added:
                     dpg.delete_item("text")
-            dpg.hide_item("main_window")
+
+            dpg.hide_item(self.window)
 
             logging.debug("setting image")
             self.img_path = image_path
@@ -183,7 +197,8 @@ class ImageViewerPDG:
             width, height, channels, data = dpg.load_image(image_path)
             self.imageW = width
             self.imageH = height
-
+            initialW = width
+            initialH = height
             with dpg.texture_registry() as reg_id:
 
                 if height >= self.clientH or width >= self.clientW:
@@ -199,14 +214,20 @@ class ImageViewerPDG:
                     logging.info(
                         f"image is larger than window... resizing to {width}x{height}")
                 if self.imageW < self.vMinW or self.imageH < self.vMinH:
-                    logging.info("image is less thhan min size... resizing")
+                    logging.info("image is less than min size... resizing")
                     width = width * 2
                     height = height * 2
                 self.texture_id = dpg.add_static_texture(
                     self.imageW, self.imageH, data, parent=reg_id)
+                padding = 0
+                if self.show_info and image_path is not self.icon_path:
+                    dpg.add_text(f"File: {self.img_path} Size: {initialW}x{initialH}",
+                                 parent="main_window", id="text", before="main_image")
+                    self.text_added = True
+                    padding = dpg.get_item_height("text")
 
                 if not self.fullscreen:
-                    dpg.set_viewport_height(height)
+                    dpg.set_viewport_height(height+padding)
                     dpg.set_viewport_width(width)
                     pos = [0, 0]
                 else:
@@ -217,10 +238,7 @@ class ImageViewerPDG:
                     self.texture_id, parent="main_window", id='main_image', width=width, height=height, label=self.img_path, pos=pos)
                 self.imageW = width
                 self.imageH = height
-                if self.show_info and image_path is not self.icon_path:
-                    dpg.add_text(f"File: {self.img_path} Size: {self.imageW}x{self.imageH}",
-                                 parent="main_window", id="text", before="main_image")
-                    self.text_added = True
+
                 logging.debug(self.img_id)
                 # load the image
                 dpg.show_item("main_window")
@@ -238,11 +256,12 @@ class ImageViewerPDG:
             dpg.configure_viewport(dpg.get_viewport_title(
             ), width=self.clientW, height=self.clientH, position=[0, 0])
             if self.img_id:
-
                 dpg.set_item_width("main_image", self.imageW)
                 dpg.set_item_height("main_image", self.imageH)
                 dpg.set_item_pos(
                     "main_image", [self.clientW//2 - self.imageW//2, self.clientH//2 - self.imageH//2])
+
+                self.position_intro_text()
         else:
             dpg.configure_viewport(dpg.get_viewport_title(
             ),  width=self.imageW if self.imageW else self.storedW, height=self.imageH if self.imageH else self.storedH, position=[self.storedW, self.storedH])
@@ -263,7 +282,11 @@ class ImageViewerPDG:
         if key == dpg.mvKey_F:
             self.toggle_fullscreen()
 
-        if self.img_path != self.icon_path:
+        if len(self.img_paths) > 0:
+            print(self.img_paths)
+            if self.img_path == self.icon_path:
+
+                self.img_path = self.img_paths[0]
             if (key == dpg.mvKey_Up):
                 logging.info(f"jumping to start of images {self.img_paths[0]}")
 
