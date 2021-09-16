@@ -1,22 +1,21 @@
 #!/usr/bin/python3
 
+from utils import get_resolution_linux
+import os
+import time
 import logging
 from os import path
 import dearpygui.dearpygui as dpg
-import dearpygui._dearpygui as internal_dpg
-import time
-import logging
-import os
-from utils import get_resolution
 
 logging.basicConfig(level=logging.INFO)
 
+# TODO: Split into key handling, image updating and viewport setup classes
 
-class ImageViewerPDG:
+
+class ImageViewer:
     def __init__(self):
         self.img_id = 0
-        self.clientW, self.clientH = get_resolution()
-
+        self.clientW, self.clientH = get_resolution_linux()
         self.directory = ""
         self.current_img = 0
         self.img_paths = []
@@ -275,46 +274,41 @@ class ImageViewerPDG:
                 else:
                     self.init_icon_img()
 
+    def handle_arrow_keys(self, key):
+        # if we don't have enough paths to cycle between images then return
+        if len(self.img_paths) < 1 or not self.image_paths[0]:
+            return
+
+        if self.img_path == self.icon_path:
+            self.img_path = self.img_paths[0]
+        if (key == dpg.mvKey_Up):
+            logging.info(f"jumping to start of images {self.img_paths[0]}")
+            self.set_image(self.img_paths[0])
+        elif (key == dpg.mvKey_Down):
+            self.set_image(self.img_paths[-1])
+            logging.info(
+                f"jumping to end of images:  {self.img_paths[-1]}")
+        elif(key == dpg.mvKey_Right):
+            self.current_img = self.img_paths.index(self.img_path) - 1
+            self.current_img = max(
+                self.current_img, 0)
+            self.set_image(self.img_paths[self.current_img])
+            logging.info(
+                f" K_LEFT setting to image:  {self.current_img}")
+        elif(key == dpg.mvKey_Left):
+            self.current_img = self.img_paths.index(self.img_path) + 1
+            self.set_image(
+                self.img_paths[self.current_img % len(self.img_paths)])
+            logging.info(
+                f" K_RIGHT setting to image:  {self.current_img}")
+
     def handle_keys(self, sender, key, user_data):
         self.print_cb_data(sender, key, user_data)
         if key == dpg.mvKey_F:
             self.toggle_fullscreen()
-
-        if len(self.img_paths) > 0:
-            print(self.img_paths)
-            if self.img_path == self.icon_path:
-
-                self.img_path = self.img_paths[0]
-            if (key == dpg.mvKey_Up):
-                logging.info(f"jumping to start of images {self.img_paths[0]}")
-
-                self.set_image(self.img_paths[0])
-
-            if (key == dpg.mvKey_Down):
-                logging.info(
-                    f"jumping to end of images:  {self.img_paths[-1]}")
-                try:
-                    self.set_image(self.img_paths[-1])
-                except:
-                    pass
-            if(key == dpg.mvKey_Right):
-                logging.debug("pressed right")
-                if len(self.img_paths) > 1 and self.img_path != '':
-                    self.current_img = self.img_paths.index(self.img_path) - 1
-                    self.current_img = max(
-                        self.current_img, 0)
-                    logging.info(
-                        f" K_LEFT setting to image:  {self.current_img}")
-                    self.set_image(self.img_paths[self.current_img])
-            if(key == dpg.mvKey_Left):
-                if len(self.img_paths) > 1 & self.current_img < len(self.img_paths) and self.img_path != '':
-                    self.current_img = self.img_paths.index(self.img_path) + 1
-                    self.set_image(
-                        self.img_paths[self.current_img % len(self.img_paths)])
-                    logging.info(
-                        f" K_RIGHT setting to image:  {self.current_img}")
         if(key == dpg.mvKey_Escape):
             self.quit()
+        self.handle_arrow_keys(key)
 
     def run(self):
         while dpg.is_dearpygui_running():
@@ -340,7 +334,7 @@ class ImageViewerPDG:
 
 if __name__ == '__main__':
     # test
-    viewer = ImageViewerPDG()
+    viewer = ImageViewer()
     viewer.set_image('dowKP.jpeg')
 
     viewer.run()
