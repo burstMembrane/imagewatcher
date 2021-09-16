@@ -141,7 +141,6 @@ class ImageViewerPDG:
 
         if(time.time() - self.dragTimer > 0.01):
             logging.debug(self.dragTimer)
-            # self.print_cb_data(sender, dragpos, user_data)
             currX, currY = dpg.get_viewport_pos()
             currX = float(currX)
             currY = float(currY)
@@ -182,14 +181,11 @@ class ImageViewerPDG:
         if image_path != self.img_path:
             if self.img_id > 0:
                 dpg.delete_item("main_image")
-
                 if self.intro_text > 0:
                     dpg.hide_item(self.intro_text)
                 if self.text_added:
                     dpg.delete_item("text")
-
             dpg.hide_item(self.window)
-
             logging.debug("setting image")
             self.img_path = image_path
             #  clear the screen
@@ -247,11 +243,13 @@ class ImageViewerPDG:
                     logging.info(self.img_paths)
 
     def toggle_fullscreen(self):
+        """ Toggles fullscreen off and on for the current viewport"""
         self.fullscreen = not self.fullscreen
         if self.fullscreen:
             self.storedW = dpg.get_viewport_width()
             self.storedH = dpg.get_viewport_height()
             dpg.set_viewport_resizable(True)
+            # sleep a little to let the viewport catchup
             time.sleep(0.05)
             dpg.configure_viewport(dpg.get_viewport_title(
             ), width=self.clientW, height=self.clientH, position=[0, 0])
