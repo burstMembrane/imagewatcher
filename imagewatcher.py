@@ -8,9 +8,11 @@ import argparse
 
 from watchdog.observers import Observer
 from watchdog.events import PatternMatchingEventHandler
-from imageviewer_pdg import ImageViewer
+from imageviewer_pdg import ImageViewerPDG
+from imageviewer_pg import ImageViewerPG
 import time
 from os import stat
+from os.path import splitext
 import logging
 from threading import Thread
 import glob
@@ -24,10 +26,19 @@ def is_dir(parser, arg):
         return arg  # the dir path
 
 
+def check_backend(parser, arg):
+    if arg in ["pg", "pdg"]:
+        return arg
+    else:
+        parser.error("Please specify a backend to use: pdg | pg")
+
+
 # parse directory argument
 parser = argparse.ArgumentParser()
 parser.add_argument('-d', '--directory',
                     help="a directory of images to watch for changes", default="", type=lambda d: is_dir(parser, d), required=True)
+parser.add_argument('-b', '--backend',
+                    help="dearpygui ro pygame as backend", default="pdg", type=lambda d: check_backend(parser, d), required=False)
 
 args = parser.parse_args()
 logging.basicConfig(format='[ %(asctime)s.%(msecs)03d ] %(message)s',
@@ -40,7 +51,7 @@ logging.basicConfig(format='[ %(asctime)s.%(msecs)03d ] %(message)s',
 class ImageCreationWatcher:
     def __init__(self, directory="."):
         self.src_path = directory
-        self.patterns = ['*.jpeg', '*.png', '*.jpeg']
+        self.patterns = ['*.jpeg', '*.png', '*.jpeg', '*.*.*.*.jpg']
         self.images = []
         for pattern in self.patterns:
             self.images.extend(glob.glob(os.path.join(
@@ -63,6 +74,7 @@ class ImageCreationWatcher:
                 time.sleep(30)
         except KeyboardInterrupt:
             self.stop()
+        self.event_observer.join()
 
     def start(self):
         self.schedule()
@@ -85,8 +97,8 @@ class ImageCreationEvent(PatternMatchingEventHandler):
         super(ImageCreationEvent, self).__init__()
         self.images = images
         self._ignore_directories = True
-        self._patterns = ['*.jpeg', '*.png', '*.jpeg']
-        self.filetypes = ["jpg", "jpeg", "png"]
+        self._patterns = ['*.jpeg', '*.png', '*.jpg', '*.bmp']
+        self.filetypes = [pattern.split('.')[-1] for pattern in self.patterns]
         logging.info(
             f"watcher found {len(self.images)} existing images in folder.")
         logging.info(f"watching for filetypes:  {' '.join(self.filetypes)}")
@@ -103,37 +115,34 @@ class ImageCreationEvent(PatternMatchingEventHandler):
             if(size == last_size):
                 return True
 
-    def on_modified(self, event):
-        pass
-        # if self.wait_for_size(event.src_path) and event.src_path not in self.images:
-        #     logging.info(f'file_modified:  {event.src_path}')
-        #     viewer.set_image(event.src_path)
-
     def on_created(self, event):
-        logging.info(f"file created at path:  {event.src_path}")
-        # do something when the file is created
-        if event.src_path.split('.')[-1] in self.filetypes:
-            logging.info(f"loading image at {event.src_path}")
-
-            if self.wait_for_size(event.src_path):
-                viewer.set_image(event.src_path)
-
+        new_file_path = event.src_path
+        logging.info(f"file created at path:  {new_file_path}")
+        print(new_file_path.split('.')[-1])
+        if new_file_path.split('.')[-1] in self.filetypes:
+            logging.info(f"loading image at {new_file_path}")
+            if self.wait_for_size(new_file_path):
+                viewer.set_image(new_file_path)
         else:
+            logging.info(f'{new_file_path} not an image:  skipping')
 
-            logging.info('not an image:  skipping')
 
-
-viewer = ImageViewer()
 if __name__ == "__main__":
+    if args.backend == "pg":
+        viewer = ImageViewerPG()
+    elif args.backend == "pdg":
+        viewer = ImageViewerPDG()
     # create file watcher
     if(os.path.isdir(args.directory)):
         imwatcher = ImageCreationWatcher(directory=args.directory)
         # run the file watcher in a separate thread
-        viewer.directory = args.directory
+        viewer.set_directory(args.directory, imwatcher.images)
         worker = Thread(target=imwatcher.run)
         worker.setDaemon(True)
         worker.start()
         viewer.run()
     else:
         logging.info("Not a valid directory.. Quitting")
+worker.join()
+worker.stop()
 viewer.quit()

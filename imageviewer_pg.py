@@ -6,7 +6,7 @@ from os import environ
 from PIL import Image
 
 
-class ImageViewer:
+class ImageViewerPG:
     def __init__(self):
 
         # IMAGE SETUP
@@ -24,7 +24,7 @@ class ImageViewer:
         # WINDOW SETUP
         pygame.init()
         wininfo = pygame.display.Info()
-        print(wininfo)
+
         self.screenW = wininfo.current_w
         self.screenH = wininfo.current_h
 
@@ -47,7 +47,7 @@ class ImageViewer:
         # FONT SETUP
         self.font = pygame.font.Font(pygame.font.match_font('notosans'), 24)
         self.draw_text_centered(
-            f"Watching {self.text} for images")
+            f"Watching {self.directory} for images")
 
     def init_window(self, width, height):
 
@@ -237,7 +237,7 @@ class ImageViewer:
 
 if __name__ == '__main__':
     # test
-    viewer = ImageViewer()
+    viewer = ImageViewerPG()
     while not viewer.shouldquit:
         viewer.set_image('test.jpeg')
         viewer.run()
