@@ -51,7 +51,7 @@ logging.basicConfig(format='[ %(asctime)s.%(msecs)03d ] %(message)s',
 class ImageCreationWatcher:
     def __init__(self, directory="."):
         self.src_path = directory
-        self.patterns = ['*.jpeg', '*.png', '*.jpeg', '*.*.*.*.jpg']
+        self.patterns = ['*.jpeg', '*.png', '*.jpg', '*.bmp']
         self.images = []
         for pattern in self.patterns:
             self.images.extend(glob.glob(os.path.join(
@@ -103,6 +103,10 @@ class ImageCreationEvent(PatternMatchingEventHandler):
             f"watcher found {len(self.images)} existing images in folder.")
         logging.info(f"watching for filetypes:  {' '.join(self.filetypes)}")
 
+    def on_deleted(self, event):
+        new_file_path = event.src_path
+        viewer.remove_img(new_file_path)
+
     def wait_for_size(self, file):
         last_size, size = -1, 0
         while size != last_size:
@@ -143,6 +147,7 @@ if __name__ == "__main__":
         viewer.run()
     else:
         logging.info("Not a valid directory.. Quitting")
-worker.join()
-worker.stop()
+
+worker.join(timeout=1.0)
 viewer.quit()
+quit(0)
