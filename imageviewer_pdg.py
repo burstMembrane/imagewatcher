@@ -6,7 +6,7 @@ import dearpygui.dearpygui as dpg
 import dearpygui._dearpygui as internal_dpg
 import time
 import logging
-
+import os
 from utils import get_resolution
 
 logging.basicConfig(level=logging.INFO)
@@ -39,13 +39,15 @@ class ImageViewerPDG:
         self.init_viewport()
         self.init_window()
         self.init_dpg()
-        self.icon_path = "assets/imagewatcher.png"
+        self.icon_path = os.path.expanduser(
+            "~/.config/imagewatcher/imagewatcher.png")
+        print(self.icon_path)
         self.set_image(self.icon_path)
         self.init_icon_img()
 
     def init_icon_img(self):
         dpg.set_viewport_width(self.imageW + 80)
-        width, height, channels, data = dpg.load_image(self.icon_path)
+
         if dpg.get_item_pos("main_image")[0] == 0:
             dpg.set_item_pos("main_image", [40, 120])
         else:
