@@ -1,6 +1,6 @@
 
 from watchdog.events import PatternMatchingEventHandler
-from imageviewer.ui.imageviewer import ImageViewer
+from imagewatcher.ui.imageviewer import ImageViewer
 import logging
 import time
 from os import stat, path

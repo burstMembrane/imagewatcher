@@ -5,8 +5,8 @@ import os
 import time
 
 # relative imports
-from imageviewer.filewatcher.imagecreationevent import ImageCreationEvent
-from imageviewer.ui.imageviewer import ImageViewer
+from imagewatcher.filewatcher.imagecreationevent import ImageCreationEvent
+from imagewatcher.ui.imageviewer import ImageViewer
 
 logger = logging.getLogger(__name__)
 

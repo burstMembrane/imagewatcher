@@ -1,6 +1,6 @@
 
-from imageviewer.ui.imageviewerkeyhandler import ImageViewerKeyHandler
-from utils import get_resolution_linux
+from imagewatcher.ui.imageviewerkeyhandler import ImageViewerKeyHandler
+from imagewatcher.utils import get_resolution_linux
 import dearpygui.dearpygui as dpg
 import logging
 import time

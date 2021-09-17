@@ -6,7 +6,7 @@ import time
 import logging
 import dearpygui.dearpygui as dpg
 
-from imageviewer.ui.imageviewerwindow import ImageViewerWindow
+from imagewatcher.ui.imageviewerwindow import ImageViewerWindow
 import coloredlogs
 
 logging.basicConfig(format='[ %(asctime)s.%(msecs)03d ] [%(levelname)s] %(message)s',
