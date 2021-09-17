@@ -48,5 +48,5 @@ if __name__ == "__main__":
     logger = logging.getLogger(__name__)
     coloredlogs.install(
         logger=logger, fmt='[ ImageWatcher ][ %(asctime)s ] [%(name)s.%(funcName)s()] [%(levelname)s] %(message)s')
-    print(logger)
+
     main(args)
