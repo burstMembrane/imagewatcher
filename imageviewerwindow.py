@@ -3,7 +3,7 @@ from imageviewerkeyhandler import ImageViewerKeyHandler
 from utils import get_resolution_linux
 import dearpygui.dearpygui as dpg
 import logging
-
+import time
 logger = logging.getLogger(__name__)
 
 

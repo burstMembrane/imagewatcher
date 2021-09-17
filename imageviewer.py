@@ -12,7 +12,9 @@ import coloredlogs
 logging.basicConfig(format='[ %(asctime)s.%(msecs)03d ] [%(levelname)s] %(message)s',
                     level=logging.INFO,
                     datefmt=f"%d-%m-%y %H:%M:%S")
+
 logger = logging.getLogger(__name__)
+
 coloredlogs.install(level='INFO', logger=logger)
 
 
@@ -75,18 +77,6 @@ class ImageViewer(ImageViewerWindow):
         time.sleep(1)
         self.init_icon_img()
         self.key_handler.update_img_paths(self.img_paths, self.img_path)
-
-    def handle_windowdrag(self, sender, dragpos, user_data):
-        if self.dragTimer == 0:
-            self.dragTimer = time.time()
-        if(time.time() - self.dragTimer > 0.01):
-            currX, currY = dpg.get_viewport_pos()
-            posX = dragpos[1] + currX
-            posY = dragpos[2] + currY
-            if all([posX, posY, currX, currY]) > 0.0:
-                dpg.set_viewport_pos(
-                    [posX,   posY])
-                self.dragTimer = 0.0
 
     def check_img_size(self, width, height):
         if height >= self.clientH or width >= self.clientW:
