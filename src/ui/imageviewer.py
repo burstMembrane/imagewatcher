@@ -2,12 +2,13 @@
 
 
 import os
-import time
 import logging
 import dearpygui.dearpygui as dpg
 
 from src.ui.imageviewerwindow import ImageViewerWindow
-import coloredlogs
+from PIL import Image
+
+from timeit import timeit
 
 
 class ImageViewer(ImageViewerWindow):
@@ -116,6 +117,37 @@ class ImageViewer(ImageViewerWindow):
         pos = self.resize_viewport(width, height)
         return dpg.add_image(
             self.texture_id, parent="main_window", id=image_id, width=width, height=height,  pos=pos)
+
+    def set_image(self, image_path, image_id="main_image"):
+        self.logger.debug(f"img_id:  {self.img_id}")
+
+        # if the image hasn't changed, return
+        if image_path == self.img_path:
+            return
+        if image_path is not self.icon_path:
+            dpg.hide_item(self.logo_id)
+            dpg.hide_item(self.intro_text)
+            dpg.hide_item("intro_text")
+
+        # hide the window
+
+        self.logger.debug("setting image")
+        self.img_path = image_path
+        #  clear the screen
+
+        width, height, _, data = dpg.load_image(image_path)
+        initial_w = width
+        initial_h = height
+        self.delete_img_if_changed()
+        image = Image.open(image_path)
+
+        resized = image.resize((100, 100))
+        print(resized.size)
+
+        self.img_id = self.add_image(width, height, data, image_id=image_id)
+
+        self.show_image_text(image_path, initial_w, initial_h)
+        self.update_image_paths(image_path)
 
     def update_image_paths(self, image_path):
         if image_path in self.img_paths or image_path == self.icon_path:

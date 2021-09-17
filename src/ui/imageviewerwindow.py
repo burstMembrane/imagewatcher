@@ -156,31 +156,6 @@ class ImageViewerWindow:
             dpg.set_item_width(self.img_id, dpg.get_viewport_width())
             dpg.set_item_height(self.img_id, dpg.get_viewport_height())
 
-    def set_image(self, image_path, image_id="main_image"):
-        self.logger.debug(f"img_id:  {self.img_id}")
-
-        # if the image hasn't changed, return
-        if image_path == self.img_path:
-            return
-        if image_path is not self.icon_path:
-            dpg.hide_item(self.logo_id)
-            dpg.hide_item(self.intro_text)
-            dpg.hide_item("intro_text")
-        self.delete_img_if_changed()
-        # hide the window
-
-        self.logger.debug("setting image")
-        self.img_path = image_path
-        #  clear the screen
-
-        width, height, _, data = dpg.load_image(image_path)
-        initial_w = width
-        initial_h = height
-
-        self.img_id = self.add_image(width, height, data, image_id=image_id)
-        self.show_image_text(image_path, initial_w, initial_h)
-        self.update_image_paths(image_path)
-
     def quit(self):
         try:
             self.logger.info("ImageWatcher quitting...")
