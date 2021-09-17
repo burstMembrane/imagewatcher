@@ -66,12 +66,16 @@ class ImageViewer(ImageViewerWindow):
     def set_directory(self, path, files):
         self.directory = path
         self.img_paths = files
-        time.sleep(1)
+
         self.init_icon_img()
         self.key_handler.update_img_paths(self.img_paths, self.img_path)
 
     def check_img_size(self, width, height):
-        if height >= self.clientH or width >= self.clientW:
+        if width < self.vp_min_width or height < self.vp_min_height:
+            logger.info("image is less than min size... resizing")
+            width = width * 1.1
+            height = height * 1.1
+        elif height >= self.clientH or width >= self.clientW:
             diff = abs((self.clientW/self.clientH) / (width/height))
             if not self.fullscreen:
                 diff = diff
@@ -82,10 +86,7 @@ class ImageViewer(ImageViewerWindow):
             width = width / diff
             logger.info(
                 f"image is larger than window... resizing to {width}x{height}")
-        # if self.image_w < self.vp_min_width or self.image_h < self.vp_min_height:
-        #     logger.info("image is less than min size... resizing")
-        #     width = width * 2
-        #     height = height * 2
+
         return width, height
 
     def delete_img_if_changed(self):
