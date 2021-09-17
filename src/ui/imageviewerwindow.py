@@ -186,9 +186,7 @@ class ImageViewerWindow:
             self.logger.info("ImageWatcher quitting...")
 
             dpg.stop_dearpygui()
-
             dpg.destroy_context()
-            quit()
 
         except:
             pass

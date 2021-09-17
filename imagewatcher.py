@@ -26,7 +26,6 @@ def main(args):
     watcher_thread.start()
     viewer.run()
     watcher_thread.join(timeout=0.01)
-    viewer.quit()
     exit(0)
 
 
