@@ -35,17 +35,15 @@ if __name__ == "__main__":
         description="ImageWatcher: views created images in a folder")
     parser.add_argument('-d', '--directory',
                         help="a directory of images to watch for changes", default="", type=lambda d: is_dir(parser, d), required=True)
-
     parser.add_argument('-v', '--verbose',
                         help="log debug messages to console",  action='store_true')
-
     args = parser.parse_args()
-
-    logging.basicConfig(
-        level=logging.DEBUG if args.verbose else logging.INFO,
-    )
+    logging.basicConfig(level=logging.DEBUG if args.verbose else logging.INFO)
     logger = logging.getLogger(__name__)
+
     coloredlogs.install(
-        logger=logger, fmt='[ ImageWatcher ][ %(asctime)s ] [%(name)s.%(funcName)s()] [%(levelname)s] %(message)s')
+        logger=logger,
+        fmt='[ ImageWatcher ][ %(asctime)s ] [%(name)s.%(funcName)s()] [%(levelname)s] %(message)s',
+    )
 
     main(args)
