@@ -1,5 +1,5 @@
 
-from imageviewerkeyhandler import ImageViewerKeyHandler
+from imageviewer.ui.imageviewerkeyhandler import ImageViewerKeyHandler
 from utils import get_resolution_linux
 import dearpygui.dearpygui as dpg
 import logging

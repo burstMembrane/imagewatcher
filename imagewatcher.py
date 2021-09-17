@@ -3,8 +3,8 @@
 # arrow keys to switch between iamges and filename display
 
 import argparse
-from imagecreationwatcher import ImageCreationWatcher
-from imageviewer import ImageViewer
+from imageviewer.ui.imageviewer import ImageViewer
+from imageviewer.filewatcher.imagecreationwatcher import ImageCreationWatcher
 import logging
 from threading import Thread
 from utils import is_dir
