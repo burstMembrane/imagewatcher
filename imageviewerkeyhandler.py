@@ -1,6 +1,8 @@
 import dearpygui.dearpygui as dpg
 import logging
 
+logger = logging.getLogger(__name__)
+
 
 class ImageViewerKeyHandler():
     def __init__(self, img_paths, quit_cb, fullscreen_cb, set_image_cb):
@@ -17,27 +19,27 @@ class ImageViewerKeyHandler():
         # if self.img_path == self.icon_path:
         #     self.img_path = self.img_paths[0]
         if (key == dpg.mvKey_Up):
-            logging.info(f"jumping to start of images {self.img_paths[0]}")
+            logger.info(f"jumping to start of images {self.img_paths[0]}")
             self.set_image(self.img_paths[0])
             self.img_path = self.img_paths[0]
         elif (key == dpg.mvKey_Down):
             self.set_image(self.img_paths[-1])
-            logging.info(
+            logger.info(
                 f"jumping to end of images:  {self.img_paths[-1]}")
             self.img_path = self.img_paths[-1]
-        elif(key == dpg.mvKey_Right):
+        elif(key == dpg.mvKey_Left):
             self.current_img = self.img_paths.index(self.img_path) - 1
             self.current_img = max(
                 self.current_img, 0)
             self.set_image(self.img_paths[self.current_img])
             self.img_path = self.img_paths[self.current_img]
-            logging.info(
+            logger.info(
                 f" K_LEFT setting to image:  {self.current_img}")
-        elif(key == dpg.mvKey_Left):
+        elif(key == dpg.mvKey_Right):
             self.current_img = self.img_paths.index(self.img_path) + 1
             self.set_image(
                 self.img_paths[self.current_img % len(self.img_paths)])
-            logging.info(
+            logger.info(
                 f" K_RIGHT setting to image:  {self.current_img}")
             self.set_image(
                 self.img_paths[self.current_img % len(self.img_paths)])

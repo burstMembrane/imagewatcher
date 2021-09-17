@@ -8,6 +8,8 @@ import time
 from imagecreationevent import ImageCreationEvent
 from imageviewer import ImageViewer
 
+logger = logging.getLogger(__name__)
+
 
 class ImageCreationWatcher:
     def __init__(self, directory=".", viewer=ImageViewer):
@@ -22,18 +24,18 @@ class ImageCreationWatcher:
         self.event_handler = ImageCreationEvent(
             images=self.images, viewer=self.viewer)
         self.event_observer = Observer()
-        logging.info(f"Watching directory {directory} for images.")
+        logger.info(f"Watching directory {directory} for images.")
 
     def run(self):
         if os.path.isdir(self.src_path):
             self.start()
         else:
-            logging.info(f"{self.src_path} is not a valid directory")
+            logger.info(f"{self.src_path} is not a valid directory")
             self.stop()
             exit()
         try:
             while True:
-                # logging.info('Checking...')
+                # logger.info('Checking...')
                 time.sleep(30)
         except KeyboardInterrupt:
             self.stop()

@@ -9,6 +9,8 @@ import logging
 from threading import Thread
 from utils import is_dir
 
+logger = logging.getLogger(__name__)
+
 
 def main(args):
     viewer = ImageViewer()
