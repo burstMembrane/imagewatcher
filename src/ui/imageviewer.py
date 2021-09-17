@@ -6,7 +6,7 @@ import time
 import logging
 import dearpygui.dearpygui as dpg
 
-from imagewatcher.ui.imageviewerwindow import ImageViewerWindow
+from src.ui.imageviewerwindow import ImageViewerWindow
 import coloredlogs
 
 logging.basicConfig(format='[ %(asctime)s.%(msecs)03d ] [%(levelname)s] %(message)s',
@@ -22,24 +22,16 @@ class ImageViewer(ImageViewerWindow):
     def __init__(self):
         # initialize the base class
         ImageViewerWindow.__init__(self)
-
         self.img_id = 0
-
         self.directory = ''
         self.img_path = ''
-
         self.fullscreen = False
         self.dragTimer = 0.0
-
-        # self.image_w, self.image_h = (self.w//2, self.h//2)
-
         self.icon_path = os.path.expanduser(
             "~/.config/imagewatcher/imagewatcher.png")
         logging.debug(self.icon_path)
-
         self.logo_id = "logo"
         width, height, _, data = dpg.load_image(self.icon_path)
-
         self.add_image(width, height, data, image_id=self.logo_id)
         # get icon pos
 

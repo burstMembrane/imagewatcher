@@ -3,11 +3,11 @@
 # arrow keys to switch between iamges and filename display
 
 import argparse
-from imagewatcher.ui.imageviewer import ImageViewer
-from imagewatcher.filewatcher.imagecreationwatcher import ImageCreationWatcher
+from src.ui.imageviewer import ImageViewer
+from src.filewatcher.imagecreationwatcher import ImageCreationWatcher
 import logging
 from threading import Thread
-from imagewatcher.utils import is_dir
+from src.ui.utils import is_dir
 
 logger = logging.getLogger(__name__)
 
