@@ -9,19 +9,13 @@ import dearpygui.dearpygui as dpg
 from src.ui.imageviewerwindow import ImageViewerWindow
 import coloredlogs
 
-logging.basicConfig(format='[ %(asctime)s.%(msecs)03d ] [%(levelname)s] %(message)s',
-                    level=logging.INFO,
-                    datefmt=f"%d-%m-%y %H:%M:%S")
-
-logger = logging.getLogger(__name__)
-
-coloredlogs.install(level='INFO', logger=logger)
-
 
 class ImageViewer(ImageViewerWindow):
     def __init__(self):
         # initialize the base class
         ImageViewerWindow.__init__(self)
+
+        self.logger = logging.getLogger(self.__class__.__name__)
         self.img_id = 0
         self.directory = ''
         self.img_path = ''
@@ -29,24 +23,24 @@ class ImageViewer(ImageViewerWindow):
         self.dragTimer = 0.0
         self.icon_path = os.path.expanduser(
             "~/.config/imagewatcher/imagewatcher.png")
-        logging.debug(self.icon_path)
+        self.logger.debug(self.icon_path)
         self.logo_id = "logo"
         width, height, _, data = dpg.load_image(self.icon_path)
         self.add_image(width, height, data, image_id=self.logo_id)
         # get icon pos
 
     def init_icon_img(self):
-        logging.debug("setting icon image")
+        self.logger.debug("setting icon image")
         dpg.set_item_pos(
             self.logo_id, [self.vp_min_width//2-self.image_w//2, self.vp_min_height//2-self.image_h//2])
         self.position_intro_text()
 
     def position_intro_text(self):
 
-        logging.debug("positioning intro text")
+        self.logger.debug("positioning intro text")
         x, y = dpg.get_item_pos(self.logo_id)
         w = dpg.get_item_width(self.logo_id)
-        logging.debug(f"logo width {w}")
+        self.logger.debug(f"logo width {w}")
         h = dpg.get_item_height(self.logo_id)
 
         dpg.set_global_font_scale(1)
@@ -72,7 +66,7 @@ class ImageViewer(ImageViewerWindow):
 
     def check_img_size(self, width, height):
         if width < self.vp_min_width or height < self.vp_min_height:
-            logger.info("image is less than min size... resizing")
+            self.logger.info("image is less than min size... resizing")
             width = width * 1.1
             height = height * 1.1
         elif height >= self.clientH or width >= self.clientW:
@@ -81,10 +75,10 @@ class ImageViewer(ImageViewerWindow):
                 diff = diff
             else:
                 diff = diff * 1.1
-            logging.debug(f"difference:  {diff}")
+            self.logger.debug(f"difference:  {diff}")
             height = height / diff
             width = width / diff
-            logger.info(
+            self.logger.info(
                 f"image is larger than window... resizing to {width}x{height}")
 
         return width, height
@@ -105,10 +99,9 @@ class ImageViewer(ImageViewerWindow):
 
     def print_cb_data(self, sender, app_data, user_data):
 
-        logging.debug(f"sender is: {sender}")
-        logging.debug(f"app_data is: {app_data}")
-        logging.debug(f"user_data is: {user_data}")
-# NEEDS REFACTOR -- IS GIANT!
+        self.logger.debug(f"sender is: {sender}")
+        self.logger.debug(f"app_data is: {app_data}")
+        self.logger.debug(f"user_data is: {user_data}")
 
     def add_image(self, width, height, data, image_id="main_image"):
 
@@ -128,7 +121,7 @@ class ImageViewer(ImageViewerWindow):
         if image_path in self.img_paths or image_path == self.icon_path:
             return
         self.img_paths.append(image_path)
-        logger.info(self.img_paths)
+        self.self.logger.info(self.img_paths)
         self.key_handler.update_img_paths(
             self.img_paths, self.img_path)
 
@@ -139,7 +132,7 @@ class ImageViewer(ImageViewerWindow):
                 dpg.render_dearpygui_frame()
 
             except KeyboardInterrupt or SystemExit:
-                logger.info("quitting...")
+                self.logger.info("quitting...")
                 self.quit()
 
 

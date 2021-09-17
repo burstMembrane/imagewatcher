@@ -4,11 +4,12 @@ from src.ui.utils import get_resolution_linux
 import dearpygui.dearpygui as dpg
 import logging
 import time
-logger = logging.getLogger(__name__)
 
 
 class ImageViewerWindow:
     def __init__(self):
+        self.logger = logger = logging.getLogger(self.__class__.__name__)
+
         self.clientW, self.clientH = get_resolution_linux()
         self.w, self.h = (1024, 768)
         self.vp_min_width, self.vp_min_height = (640, 480)
@@ -60,7 +61,8 @@ class ImageViewerWindow:
         dpg.setup_dearpygui(viewport=self.viewport)
         self.stored_pos = dpg.get_viewport_pos()
         # self.center_viewport()
-        logging.debug(f"clientW:  {self.clientW} \n clientH: {self.clientH}")
+        self.logger.debug(
+            f"clientW:  {self.clientW} \n clientH: {self.clientH}")
         dpg.set_viewport_clear_color([0, 0.0, 0.0, 0.0])
         dpg.show_viewport(self.viewport)
 
@@ -91,7 +93,7 @@ class ImageViewerWindow:
 
         self.currW = dpg.get_viewport_width()
         self.currH = dpg.get_viewport_height()
-        logging.debug(f"currH: {self.currW} \n currH: {self.currH}")
+        self.logger.debug(f"currH: {self.currW} \n currH: {self.currH}")
 
         dpg.set_viewport_pos(
             [self.clientW//2-xoff, self.clientH//2 - yoff])
@@ -114,12 +116,12 @@ class ImageViewerWindow:
         # TODO: simplify logic
         self.fullscreen = not self.fullscreen
         if self.fullscreen:
-            logging.debug(self.__dict__)
+            self.logger.debug(self.__dict__)
 
             self.stored_w = dpg.get_viewport_width()
             self.stored_h = dpg.get_viewport_height()
 
-            logging.debug(
+            self.logger.debug(
                 f"stored pos: {self.stored_pos}  stored_dim:  {'x'.join((str(self.stored_w), str(self.stored_h)))}")
             dpg.set_viewport_resizable(True)
             # sleep a little to let the viewport catchup
@@ -155,7 +157,7 @@ class ImageViewerWindow:
             dpg.set_item_height(self.img_id, dpg.get_viewport_height())
 
     def set_image(self, image_path, image_id="main_image"):
-        logging.debug(f"img_id:  {self.img_id}")
+        self.logger.debug(f"img_id:  {self.img_id}")
 
         # if the image hasn't changed, return
         if image_path == self.img_path:
@@ -167,7 +169,7 @@ class ImageViewerWindow:
         self.delete_img_if_changed()
         # hide the window
 
-        logging.debug("setting image")
+        self.logger.debug("setting image")
         self.img_path = image_path
         #  clear the screen
 
@@ -181,7 +183,7 @@ class ImageViewerWindow:
 
     def quit(self):
         try:
-            logging.debug("quitting...")
+            self.logger.debug("quitting...")
             dpg.minimize_viewport()
             dpg.stop_dearpygui()
             dpg.cleanup_dearpygui()

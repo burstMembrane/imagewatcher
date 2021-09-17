@@ -1,11 +1,10 @@
 import dearpygui.dearpygui as dpg
 import logging
 
-logger = logging.getLogger(__name__)
-
 
 class ImageViewerKeyHandler():
     def __init__(self, img_paths, quit_cb, fullscreen_cb, set_image_cb):
+        self.logger = logger = logging.getLogger(self.__class__.__name__)
         self.img_paths = img_paths
         self.quit = quit_cb
         self.toggle_fullscreen = fullscreen_cb
@@ -16,15 +15,15 @@ class ImageViewerKeyHandler():
         # if we don't have enough paths to cycle between images then return
         if len(self.img_paths) < 1 or not self.img_paths[0]:
             return
-        # if self.img_path == self.icon_path:
-        #     self.img_path = self.img_paths[0]
+        if self.img_path not in self.img_paths:
+            self.img_path = self.img_paths[0]
         if (key == dpg.mvKey_Up):
-            logger.info(f"jumping to start of images {self.img_paths[0]}")
+            self.logger.info(f"jumping to start of images {self.img_paths[0]}")
             self.set_image(self.img_paths[0])
             self.img_path = self.img_paths[0]
         elif (key == dpg.mvKey_Down):
             self.set_image(self.img_paths[-1])
-            logger.info(
+            self.logger.info(
                 f"jumping to end of images:  {self.img_paths[-1]}")
             self.img_path = self.img_paths[-1]
         elif(key == dpg.mvKey_Left):
@@ -33,13 +32,13 @@ class ImageViewerKeyHandler():
                 self.current_img, 0)
             self.set_image(self.img_paths[self.current_img])
             self.img_path = self.img_paths[self.current_img]
-            logger.info(
+            self.logger.info(
                 f" K_LEFT setting to image:  {self.current_img}")
         elif(key == dpg.mvKey_Right):
             self.current_img = self.img_paths.index(self.img_path) + 1
             self.set_image(
                 self.img_paths[self.current_img % len(self.img_paths)])
-            logger.info(
+            self.logger.info(
                 f" K_RIGHT setting to image:  {self.current_img}")
             self.set_image(
                 self.img_paths[self.current_img % len(self.img_paths)])

@@ -9,10 +9,10 @@ Built in Python using [DearPyGui](https://github.com/hoffstadt/DearPyGui) and�
 ## Installation
 
 clone the repo
-```
+
+```bash
 git clone https://github.com/burstMembrane/imagewatcher
 ```
-
 
 create a virtual env for the project
 
@@ -30,6 +30,7 @@ pip install -r requirements.txt
 ## Optional
 
 You can install the package with pyinstaller
+
 ```bash
 pip install pyinstaller
 chmod +x install.sh
@@ -48,4 +49,4 @@ python imagewatcher.py -d </path/to/directory/to/watch>
 ESC -- quit
 ARROW_KEYS -- cycle images in folder
 f -- toggle fullscreen
-```
+``

@@ -8,11 +8,10 @@ import time
 from src.filewatcher.imagecreationevent import ImageCreationEvent
 from src.ui.imageviewer import ImageViewer
 
-logger = logging.getLogger(__name__)
-
 
 class ImageCreationWatcher:
     def __init__(self, directory=".", viewer=ImageViewer):
+        self.logger = logging.getLogger(self.__class__.__name__)
         self.viewer = viewer
         self.src_path = directory
         self.patterns = ['*.jpeg', '*.png', '*.jpg', '*.bmp']
@@ -24,13 +23,13 @@ class ImageCreationWatcher:
         self.event_handler = ImageCreationEvent(
             images=self.images, viewer=self.viewer)
         self.event_observer = Observer()
-        logger.info(f"Watching directory {directory} for images.")
+        self.logger.info(f"Watching directory {directory} for images.")
 
     def run(self):
         if os.path.isdir(self.src_path):
             self.start()
         else:
-            logger.info(f"{self.src_path} is not a valid directory")
+            self.logger.info(f"{self.src_path} is not a valid directory")
             self.stop()
             exit()
         try:
