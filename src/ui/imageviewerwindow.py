@@ -183,7 +183,7 @@ class ImageViewerWindow:
 
     def quit(self):
         try:
-            self.logger.debug("quitting...")
+            self.logger.info("ImageWatcher quitting...")
 
             dpg.stop_dearpygui()
 
