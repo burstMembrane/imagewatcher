@@ -184,10 +184,11 @@ class ImageViewerWindow:
     def quit(self):
         try:
             self.logger.debug("quitting...")
-            dpg.minimize_viewport()
+
             dpg.stop_dearpygui()
-            dpg.cleanup_dearpygui()
+
             dpg.destroy_context()
+            quit()
 
         except:
             pass

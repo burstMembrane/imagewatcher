@@ -9,6 +9,7 @@ import logging
 from threading import Thread
 from src.ui.utils import is_dir
 import coloredlogs
+from sys import exit
 logger = logging.getLogger(__name__)
 
 
@@ -24,9 +25,9 @@ def main(args):
     watcher_thread.setDaemon(True)
     watcher_thread.start()
     viewer.run()
-    watcher_thread.join(timeout=1.0)
+    watcher_thread.join(timeout=0.01)
     viewer.quit()
-    quit(0)
+    exit(0)
 
 
 if __name__ == "__main__":
