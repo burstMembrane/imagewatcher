@@ -15,24 +15,20 @@ class ImageViewer:
     def __init__(self):
         self.img_id = 0
         self.clientW, self.clientH = get_resolution_linux()
-        self.directory = ""
-        self.current_img = 0
+        self.directory = ''
+        self.img_path = ''
         self.img_paths = []
         self.fullscreen = False
-        self.img_path = ''
-        self.paddingH = 70
+
         self.dragTimer = 0.0
-        self.lastPosX = 0
-        self.lastPosY = 0
         self.show_info = True
         self.shouldquit = False
         self.text_added = False
         self.intro_text = 0
         self.w, self.h = (1024, 768)
-        self.storedW, self.storedH = (1024, 768)
-        self.vMinW, self.vMinH = (300, 300)
-        self.vPos = (self.w//2, self.h//2)
-        self.imageW, self.imageH = self.vPos
+        self.vp_min_width, self.vp_min_height = (300, 300)
+
+        self.image_w, self.image_h = (self.w//2, self.h//2)
         # create viewport takes in config options too!
         self.init_viewport()
         self.init_window()
@@ -46,7 +42,7 @@ class ImageViewer:
         # get icon pos
 
     def init_icon_img(self):
-        dpg.set_viewport_width(self.imageW + 80)
+        dpg.set_viewport_width(self.image_w + 80)
 
         if dpg.get_item_pos("main_image")[0] == 0:
             dpg.set_item_pos("main_image", [40, 100])
@@ -72,7 +68,7 @@ class ImageViewer:
 
     def init_viewport(self):
         self.viewport = dpg.create_viewport(
-            title='Image Viewer', width=self.w, height=self.h, decorated=False, resizable=True, clear_color=[0, 0, 0, 0], min_width=self.vMinW, min_height=self.vMinH)
+            title='Image Viewer', width=self.w, height=self.h, decorated=False, resizable=True, clear_color=[0, 0, 0, 0], min_width=self.vp_min_width, min_height=self.vp_min_height)
         dpg.set_viewport_clear_color([0.0, 0.0, 0.0, 0.0])
         # MOUSE SETUP
         dpg.setup_dearpygui(viewport=self.viewport)
@@ -155,7 +151,7 @@ class ImageViewer:
             width = width / diff
             logging.info(
                 f"image is larger than window... resizing to {width}x{height}")
-        if self.imageW < self.vMinW or self.imageH < self.vMinH:
+        if self.image_w < self.vp_min_width or self.image_h < self.vp_min_height:
             logging.info("image is less than min size... resizing")
             width = width * 2
             height = height * 2
@@ -196,8 +192,8 @@ class ImageViewer:
         #  clear the screen
 
         width, height, _, data = dpg.load_image(image_path)
-        self.imageW = width
-        self.imageH = height
+        self.image_w = width
+        self.image_h = height
         initial_w = width
         initial_h = height
 
@@ -207,13 +203,13 @@ class ImageViewer:
             self.reg_id = reg_id
             width, height = self.check_img_size(width, height)
             self.texture_id = dpg.add_static_texture(
-                self.imageW, self.imageH, data, parent=reg_id)
+                self.image_w, self.image_h, data, parent=reg_id)
 
         pos = self.resize_viewport(width, height)
         self.img_id = dpg.add_image(
             self.texture_id, parent="main_window", id='main_image', width=width, height=height, label=self.img_path, pos=pos)
-        self.imageW = width
-        self.imageH = height
+        self.image_w = width
+        self.image_h = height
         self.update_image_paths(image_path)
 
     def update_image_paths(self, image_path):
@@ -228,29 +224,29 @@ class ImageViewer:
         """ Toggles fullscreen off and on for the current viewport"""
         self.fullscreen = not self.fullscreen
         if self.fullscreen:
-            self.storedW = dpg.get_viewport_width()
-            self.storedH = dpg.get_viewport_height()
+            self.stored_w = dpg.get_viewport_width()
+            self.stored_h = dpg.get_viewport_height()
             dpg.set_viewport_resizable(True)
             # sleep a little to let the viewport catchup
             time.sleep(0.05)
             dpg.configure_viewport(dpg.get_viewport_title(
             ), width=self.clientW, height=self.clientH, position=[0, 0])
             if self.img_id:
-                dpg.set_item_width("main_image", self.imageW)
-                dpg.set_item_height("main_image", self.imageH)
+                dpg.set_item_width("main_image", self.image_w)
+                dpg.set_item_height("main_image", self.image_h)
                 dpg.set_item_pos(
-                    "main_image", [self.clientW//2 - self.imageW//2, self.clientH//2 - self.imageH//2])
+                    "main_image", [self.clientW//2 - self.image_w//2, self.clientH//2 - self.image_h//2])
 
                 self.position_intro_text()
         else:
             dpg.configure_viewport(dpg.get_viewport_title(
-            ),  width=self.imageW if self.imageW else self.storedW, height=self.imageH if self.imageH else self.storedH, position=[self.storedW, self.storedH])
+            ),  width=self.image_w if self.image_w else self.stored_w, height=self.image_h if self.image_h else self.stored_h, position=[self.stored_w, self.stored_h])
             time.sleep(0.1)
             dpg.set_viewport_resizable(False)
             self.center_viewport(xoff=self.w//2, yoff=self.h//2)
             if self.img_id:
-                dpg.set_item_width("main_image", self.imageW)
-                dpg.set_item_height("main_image", self.imageH)
+                dpg.set_item_width("main_image", self.image_w)
+                dpg.set_item_height("main_image", self.image_h)
                 if self.img_path != self.icon_path:
                     dpg.set_item_pos(
                         "main_image", [0, 0])
