@@ -1,4 +1,7 @@
 # ImageWatcher
+
+![ImageWatcher UI Preview](assets/preview.png)
+
 <br>
 A command line utility to watch for explore and watch image creation in a folder.
 
@@ -15,15 +18,19 @@ git clone https://github.com/burstMembrane/imagewatcher
 
 create a virtual env for the project
 <br>
-```
+``` bash
 virtualenv imagewatcher
 source virtualenv/bin/activate
 ```
+
 install requirements.txt
+
 ```
 pip install -r requirements.txt
 ```
-run
+
+## Usage
+
 ```
 python imagewatcher.py -d </path/to/directory/to/watch>
 ```
