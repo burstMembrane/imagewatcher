@@ -1,9 +1,10 @@
 ## The following requirements were added by pip freeze:
 autopep8==1.5.7
-keyboard==0.13.5
+coloredlogs==15.0.1
+dearpygui==0.8.64
+humanfriendly==9.2
 pkg-resources==0.0.0
 pycodestyle==2.7.0
-pygame==2.0.1
 six==1.16.0
 toml==0.10.2
 watchdog==2.1.5
