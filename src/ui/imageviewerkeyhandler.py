@@ -42,6 +42,8 @@ class ImageViewerKeyHandler():
                 f" K_RIGHT setting to image:  {self.current_img}")
             self.set_image(
                 self.img_paths[self.current_img % len(self.img_paths)])
+        elif(key == dpg.mvKey_D):
+            dpg.set_viewport_decorated(not dpg.is_viewport_decorated())
 
     def update_img_paths(self, img_paths, img_path):
         self.img_paths = img_paths

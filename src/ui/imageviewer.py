@@ -13,7 +13,8 @@ class ImageViewer(ImageViewerWindow):
     def __init__(self):
         # initialize the base class
         ImageViewerWindow.__init__(self)
-
+        self.handlers = dpg.handler_registry()
+        print(self.handlers)
         self.logger = logging.getLogger(self.__class__.__name__)
         self.img_id = 0
         self.directory = ''
@@ -135,10 +136,6 @@ class ImageViewer(ImageViewerWindow):
         initial_w = width
         initial_h = height
         self.delete_img_if_changed()
-        image = Image.open(image_path)
-
-        resized = image.resize((100, 100))
-        print(resized.size)
 
         self.img_id = self.add_image(width, height, data, image_id=image_id)
 

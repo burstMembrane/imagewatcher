@@ -4,7 +4,13 @@ from argparse import ArgumentParser
 from random import choice
 import shutil
 import subprocess
-#  funtion to cpy random images in and out of the "images" folder for testing
+import logging
+
+
+def print_cb_data(sender, app_data, user_data):
+    logging.info(f"sender is: {sender}")
+    logging.info(f"app_data is: {app_data}")
+    logging.info(f"user_data is: {user_data}")
 
 
 def get_resolution_linux():

@@ -43,7 +43,7 @@ if __name__ == "__main__":
 
     coloredlogs.install(
         logger=logger,
-        fmt='[ ImageWatcher ][ %(asctime)s ] [%(name)s.%(funcName)s()] [%(levelname)s] %(message)s',
+        fmt='[ ImageWatcher ][ %(asctime)s ] [%(name)s.%(funcName)s()] [%(levelname)s] %(message)s', level=logger.getEffectiveLevel(),
     )
 
     main(args)
