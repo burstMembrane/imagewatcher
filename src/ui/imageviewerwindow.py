@@ -6,6 +6,7 @@ from src.ui.utils import get_resolution_linux, print_cb_data
 import dearpygui.dearpygui as dpg
 import logging
 import time
+from PIL import Image
 
 
 class ImageViewerWindow:
@@ -193,6 +194,7 @@ class ImageViewerWindow:
             image_h = dpg.get_item_height(self.img_id)
             image_ratio = image_w / image_h
             window_ratio = w/h
+            tex_data = dpg.get_value(self.texture_id)
 
             self.logger.info(f"image_ratio: {image_ratio}")
             self.logger.info(f"image wxh: {image_w}x{image_h}")
@@ -200,10 +202,6 @@ class ImageViewerWindow:
             self.logger.info(f"window_ratio: {window_ratio}")
 
     def quit(self):
-        try:
-            self.logger.info("ImageWatcher quitting...")
 
-            dpg.stop_dearpygui()
-
-        except:
-            pass
+        self.logger.info("ImageWatcher quitting...")
+        dpg.stop_dearpygui()

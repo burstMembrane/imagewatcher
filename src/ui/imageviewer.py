@@ -7,6 +7,7 @@ import dearpygui.dearpygui as dpg
 
 from src.ui.imageviewerwindow import ImageViewerWindow
 from PIL import Image
+import numpy
 
 
 class ImageViewer(ImageViewerWindow):
@@ -79,7 +80,7 @@ class ImageViewer(ImageViewerWindow):
             self.logger.info(
                 f"image is larger than window... resizing to {width}x{height}")
 
-        return width, height
+        return int(width), int(height)
 
     def delete_img_if_changed(self):
         # if we already have an image, delete it and it's associated text
@@ -101,14 +102,16 @@ class ImageViewer(ImageViewerWindow):
         self.logger.debug(f"app_data is: {app_data}")
         self.logger.debug(f"user_data is: {user_data}")
 
-    def add_image(self, width, height, data, image_id="main_image"):
+    def add_image(self, width, height, data, image_id="main_image", pil_image=False):
+        logging.info(f"adding image of {width, height}")
 
         with dpg.texture_registry() as reg_id:
             self.reg_id = reg_id
 
-        self.texture_id = dpg.add_static_texture(
-            width, height, data, parent=reg_id)
-        width, height = self.check_img_size(width, height)
+            self.texture_id = dpg.add_dynamic_texture(
+                width, height, data, parent=reg_id)
+        # width, height = self.check_img_size(width, height)
+
         self.image_w = width
         self.image_h = height
         pos = self.resize_viewport(width, height)
@@ -132,12 +135,24 @@ class ImageViewer(ImageViewerWindow):
         self.img_path = image_path
         #  clear the screen
 
-        width, height, _, data = dpg.load_image(image_path)
+        pil_img = Image.open(image_path)
+
+        pil_img.putalpha(255)
+
+        width, height = pil_img.size
         initial_w = width
         initial_h = height
         self.delete_img_if_changed()
+        width, height = self.check_img_size(width, height)
+        if width != initial_w or height != initial_h:
+            resized = pil_img.resize((width, height), Image.NEAREST)
+        else:
+            resized = pil_img
+        pil_image_data = numpy.frombuffer(
+            resized.tobytes(), dtype=numpy.uint8) / 255.0
 
-        self.img_id = self.add_image(width, height, data, image_id=image_id)
+        self.img_id = self.add_image(
+            width, height, pil_image_data, image_id=image_id, pil_image=True)
 
         self.show_image_text(image_path, initial_w, initial_h)
         self.update_image_paths(image_path)
