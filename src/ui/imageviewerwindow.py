@@ -1,4 +1,4 @@
-
+"""" Tgus module handles the windowing fucntions for ImageWatcher"""
 from src.ui.imageviewerkeyhandler import ImageViewerKeyHandler
 from src.ui.utils import get_resolution_linux
 import dearpygui.dearpygui as dpg
@@ -8,12 +8,12 @@ import time
 
 class ImageViewerWindow:
     def __init__(self):
-        self.logger = logger = logging.getLogger(self.__class__.__name__)
-
+        self.logger = logging.getLogger(self.__class__.__name__)
         self.clientW, self.clientH = get_resolution_linux()
         self.w, self.h = (1024, 768)
         self.vp_min_width, self.vp_min_height = (640, 480)
         self.image_w, self.image_h = (0, 0)
+        self.dragTimer = 0.0
      # create viewport takes in config options too!
         self.img_paths = []
         self.init_viewport()
@@ -21,6 +21,9 @@ class ImageViewerWindow:
         self.key_handler = ImageViewerKeyHandler(
             self.img_paths, self.quit, self.toggle_fullscreen, self.set_image)
         self.init_dpg()
+        self.stored_pos = [0, 0]
+        self.currW = dpg.get_viewport_width()
+        self.currH = dpg.get_viewport_height()
 
     def handle_windowdrag(self, sender, dragpos, user_data):
         if self.dragTimer == 0:
@@ -62,7 +65,7 @@ class ImageViewerWindow:
         self.stored_pos = dpg.get_viewport_pos()
         # self.center_viewport()
         self.logger.debug(
-            f"clientW:  {self.clientW} \n clientH: {self.clientH}")
+            "clientW:  {} \n clientH: {}".format(self.clientW, self.clientH))
         dpg.set_viewport_clear_color([0, 0.0, 0.0, 0.0])
         dpg.show_viewport(self.viewport)
 
@@ -161,7 +164,6 @@ class ImageViewerWindow:
             self.logger.info("ImageWatcher quitting...")
 
             dpg.stop_dearpygui()
-            dpg.destroy_context()
 
         except:
             pass

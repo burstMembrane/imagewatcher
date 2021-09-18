@@ -9,7 +9,7 @@ import logging
 from threading import Thread
 from src.ui.utils import is_dir
 import coloredlogs
-from sys import exit
+
 logger = logging.getLogger(__name__)
 
 

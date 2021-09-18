@@ -8,8 +8,6 @@ import dearpygui.dearpygui as dpg
 from src.ui.imageviewerwindow import ImageViewerWindow
 from PIL import Image
 
-from timeit import timeit
-
 
 class ImageViewer(ImageViewerWindow):
     def __init__(self):
@@ -21,13 +19,13 @@ class ImageViewer(ImageViewerWindow):
         self.directory = ''
         self.img_path = ''
         self.fullscreen = False
-        self.dragTimer = 0.0
         self.icon_path = os.path.expanduser(
             "~/.config/imagewatcher/imagewatcher.png")
         self.logger.debug(self.icon_path)
         self.logo_id = "logo"
         width, height, _, data = dpg.load_image(self.icon_path)
         self.add_image(width, height, data, image_id=self.logo_id)
+
         # get icon pos
 
     def init_icon_img(self):
@@ -41,7 +39,7 @@ class ImageViewer(ImageViewerWindow):
         self.logger.debug("positioning intro text")
         x, y = dpg.get_item_pos(self.logo_id)
         w = dpg.get_item_width(self.logo_id)
-        self.logger.debug(f"logo width {w}")
+        self.logger.debug("logo width {}".format(w))
         h = dpg.get_item_height(self.logo_id)
 
         dpg.set_global_font_scale(1)
@@ -72,9 +70,7 @@ class ImageViewer(ImageViewerWindow):
             height = height * 1.1
         elif height >= self.clientH or width >= self.clientW:
             diff = abs((self.clientW/self.clientH) / (width/height))
-            if not self.fullscreen:
-                diff = diff
-            else:
+            if self.fullscreen:
                 diff = diff * 1.1
             self.logger.debug(f"difference:  {diff}")
             height = height / diff
@@ -153,7 +149,7 @@ class ImageViewer(ImageViewerWindow):
         if image_path in self.img_paths or image_path == self.icon_path:
             return
         self.img_paths.append(image_path)
-        self.self.logger.info(self.img_paths)
+        self.logger.info(self.img_paths)
         self.key_handler.update_img_paths(
             self.img_paths, self.img_path)
 

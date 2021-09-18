@@ -4,7 +4,7 @@ import logging
 
 class ImageViewerKeyHandler():
     def __init__(self, img_paths, quit_cb, fullscreen_cb, set_image_cb):
-        self.logger = logger = logging.getLogger(self.__class__.__name__)
+        self.logger = logging.getLogger(self.__class__.__name__)
         self.img_paths = img_paths
         self.quit = quit_cb
         self.toggle_fullscreen = fullscreen_cb
