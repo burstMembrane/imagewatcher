@@ -111,9 +111,14 @@ class ImageViewerWindow:
             [self.clientW//2-xoff, self.clientH//2 - yoff])
 
     def resize_viewport(self, width, height):
-        if not self.fullscreen:
+
+        if not self.fullscreen or dpg.is_viewport_decorated():
+            if self.img_path is not "":
+                dpg.set_viewport_min_width(width)
+                dpg.set_viewport_min_height(height)
             dpg.set_viewport_height(height)
             dpg.set_viewport_width(width)
+
             pos = [0, 0]
         elif self.fullscreen or dpg.is_viewport_decorated():
             pos = [self.clientW//2 - width//2,
@@ -152,9 +157,9 @@ class ImageViewerWindow:
 
             dpg.configure_viewport(dpg.get_viewport_title(
             ), width=self.clientW, height=self.clientH, x_pos=0, y_pos=0)
-
-            dpg.set_item_pos(
-                self.window, [-self.stored_pos[0], -self.stored_pos[1]])
+            time.sleep(0.1)
+            # for some reason need 200 padding
+            dpg.set_viewport_pos([0, self.clientH-self.clientH+200])
 
             self.logger.debug(
                 f"vp pos: {dpg.get_viewport_pos()}")
@@ -194,7 +199,6 @@ class ImageViewerWindow:
             image_h = dpg.get_item_height(self.img_id)
             image_ratio = image_w / image_h
             window_ratio = w/h
-            tex_data = dpg.get_value(self.texture_id)
 
             self.logger.info(f"image_ratio: {image_ratio}")
             self.logger.info(f"image wxh: {image_w}x{image_h}")

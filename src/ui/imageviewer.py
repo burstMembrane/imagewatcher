@@ -8,6 +8,7 @@ import dearpygui.dearpygui as dpg
 from src.ui.imageviewerwindow import ImageViewerWindow
 from PIL import Image
 import numpy
+import funcy
 
 
 class ImageViewer(ImageViewerWindow):
@@ -68,15 +69,17 @@ class ImageViewer(ImageViewerWindow):
     def check_img_size(self, width, height):
         if width < self.vp_min_width or height < self.vp_min_height:
             self.logger.info("image is less than min size... resizing")
-            width = width * 1.1
-            height = height * 1.1
+            width = width * 1.5
+            height = height * 1.5
         elif height >= self.clientH or width >= self.clientW:
             diff = abs((self.clientW/self.clientH) / (width/height))
             if self.fullscreen:
                 diff = diff * 1.1
+            else:
+                diff = diff * 1.5
             self.logger.debug(f"difference:  {diff}")
-            height = height / diff
-            width = width / diff
+            height = height // diff
+            width = width // diff
             self.logger.info(
                 f"image is larger than window... resizing to {width}x{height}")
 
@@ -104,13 +107,12 @@ class ImageViewer(ImageViewerWindow):
 
     def add_image(self, width, height, data, image_id="main_image", pil_image=False):
         logging.info(f"adding image of {width, height}")
-
+        self.data = data
         with dpg.texture_registry() as reg_id:
             self.reg_id = reg_id
 
-            self.texture_id = dpg.add_dynamic_texture(
-                width, height, data, parent=reg_id)
-        # width, height = self.check_img_size(width, height)
+        self.texture_id = dpg.add_static_texture(
+            width, height, data, parent=reg_id)
 
         self.image_w = width
         self.image_h = height
@@ -118,6 +120,7 @@ class ImageViewer(ImageViewerWindow):
         return dpg.add_image(
             self.texture_id, parent="main_window", id=image_id, width=width, height=height,  pos=pos)
 
+    @ funcy.print_durations(unit='ms')
     def set_image(self, image_path, image_id="main_image"):
         self.logger.debug(f"img_id:  {self.img_id}")
 
@@ -144,16 +147,17 @@ class ImageViewer(ImageViewerWindow):
         initial_h = height
         self.delete_img_if_changed()
         width, height = self.check_img_size(width, height)
-        if width != initial_w or height != initial_h:
-            resized = pil_img.resize((width, height), Image.NEAREST)
-        else:
-            resized = pil_img
+
+        pil_img = pil_img.resize((width, height))
+
         pil_image_data = numpy.frombuffer(
-            resized.tobytes(), dtype=numpy.uint8) / 255.0
+            pil_img.tobytes(), dtype=numpy.uint8) / 255.0
 
         self.img_id = self.add_image(
             width, height, pil_image_data, image_id=image_id, pil_image=True)
-
+        if not self.fullscreen:
+            dpg.set_viewport_width(width)
+            dpg.set_viewport_height(height)
         self.show_image_text(image_path, initial_w, initial_h)
         self.update_image_paths(image_path)
 
